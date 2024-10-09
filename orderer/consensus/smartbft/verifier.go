@@ -142,10 +142,18 @@ func (v *Verifier) RequestsFromProposal(proposal types.Proposal) []types.Request
 
 // VerifySignature verifies signature
 func (v *Verifier) VerifySignature(signature types.Signature) error {
-	id2Identity := v.RuntimeConfig.Load().(RuntimeConfig).ID2Identities
-	identity, exists := id2Identity[signature.ID]
+	rtc := v.RuntimeConfig.Load().(RuntimeConfig)
+
+	var (
+		identity []byte
+		exists   bool
+	)
+	identity, exists = rtc.ID2Identities[signature.ID]
 	if !exists {
-		return errors.Errorf("node with id of %d doesn't exist", signature.ID)
+		identity, exists = rtc.ID2IdentitiesPrev[signature.ID]
+		if !exists {
+			return errors.Errorf("node with id of %d doesn't exist", signature.ID)
+		}
 	}
 
 	return v.ConsenterVerifier.Evaluate([]*protoutil.SignedData{
@@ -209,11 +217,18 @@ func (v *Verifier) verifyRequest(rawRequest []byte, noConfigAllowed bool) (types
 
 // VerifyConsenterSig verifies consenter signature
 func (v *Verifier) VerifyConsenterSig(signature types.Signature, prop types.Proposal) ([]byte, error) {
-	id2Identity := v.RuntimeConfig.Load().(RuntimeConfig).ID2Identities
+	rtc := v.RuntimeConfig.Load().(RuntimeConfig)
 
-	identity, exists := id2Identity[signature.ID]
+	var (
+		identity []byte
+		exists   bool
+	)
+	identity, exists = rtc.ID2Identities[signature.ID]
 	if !exists {
-		return nil, errors.Errorf("node with id of %d doesn't exist", signature.ID)
+		identity, exists = rtc.ID2IdentitiesPrev[signature.ID]
+		if !exists {
+			return nil, errors.Errorf("node with id of %d doesn't exist", signature.ID)
+		}
 	}
 
 	sig := &Signature{}

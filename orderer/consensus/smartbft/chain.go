@@ -141,12 +141,20 @@ func NewChain(
 
 	lastBlock := LastBlockFromLedgerOrPanic(support, c.Logger)
 	lastConfigBlock := LastConfigBlockFromLedgerOrPanic(support, c.Logger)
+	previousLastConfigBlock := PreviousLastConfigBlockFromLedgerOrPanic(support, bccsp, c.Logger)
 
+	var err error
 	rtc := RuntimeConfig{
 		logger: logger,
 		id:     selfID,
 	}
-	rtc, err := rtc.BlockCommitted(lastConfigBlock, bccsp)
+	if previousLastConfigBlock != nil {
+		rtc, err = rtc.BlockCommitted(previousLastConfigBlock, bccsp)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed constructing RuntimeConfig")
+		}
+	}
+	rtc, err = rtc.BlockCommitted(lastConfigBlock, bccsp)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed constructing RuntimeConfig")
 	}
