@@ -1,0 +1,127 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+syntax = "proto3";
+
+package pbrest;
+option go_package = "github.com/hyperledger/fabric/internal/peer/rest/pbrest";
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// ErrorResponse response with an error
+message ErrorResponse {
+  string error = 1; // error message
+}
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Hyperledger fabric peer control";
+    version: "1.0";
+    description: "";
+    license: {
+      name: "Apache-2.0";
+    };
+  };
+  tags: [];
+  schemes: HTTP;
+  consumes: "application/json";
+  produces: "application/json";
+  responses: {
+    key: "500"
+    value: {
+      description: "Internal server error"
+      schema:{
+        json_schema:{
+          ref: ".pbrest.ErrorResponse"
+        }
+      }
+    }
+  }
+};
+
+service API {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+    name: "";
+  };
+
+  rpc Version(VersionRequest) returns (VersionResponse){
+    option (google.api.http) = {
+      get: "/peer/v1/version"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Return fabric peer version";
+      operation_id: "peerVersion";
+      tags: "Version";
+    };
+  }
+
+  rpc Invoke(InvokeRequest) returns (InvokeResponse){
+    option (google.api.http) = {
+      get: "/peer/v1/chaincode/invoke"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Invoke fabric transaction";
+      operation_id: "peerChaincodeInvoke";
+      tags: "Invoke";
+    };
+  }
+
+  rpc Query(QueryRequest) returns (QueryResponse){
+    option (google.api.http) = {
+      get: "/peer/v1/chaincode/query"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Query fabric transaction";
+      operation_id: "peerChaincodeQuery";
+      tags: "Query";
+    };
+  }
+}
+
+// VersionRequest request for peer version
+message VersionRequest {}
+
+// VersionResponse response for peer version
+message VersionResponse {
+  string info = 1; // peer info version
+}
+
+// InvokeRequest request for peer invoke
+message InvokeRequest {
+  string channel_id = 1;
+  string chaincode = 2;
+  string ctor = 3;
+  repeated string peer = 4;
+  string transient = 5;
+  bool is_init = 6;
+  repeated string orderer = 7;
+  bool waitForEvent = 8;
+  string waitForEventTimeout = 9;
+}
+
+// InvokeResponse response for peer invoke
+message InvokeResponse {
+  int32 status = 1;
+  string message = 2;
+  bytes payload = 3;
+}
+
+// QueryRequest request for peer query
+message QueryRequest {
+  string channel_id = 1;
+  string chaincode = 2;
+  string ctor = 3;
+  repeated string peer = 4;
+  string transient = 5;
+}
+
+// QueryResponse response for peer query
+message QueryResponse {
+  int32 status = 1;
+  string message = 2;
+  bytes payload = 3;
+}

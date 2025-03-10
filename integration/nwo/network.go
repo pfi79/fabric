@@ -1674,6 +1674,7 @@ const (
 	OperationsPort PortName = "Operations"
 	ClusterPort    PortName = "Cluster"
 	AdminPort      PortName = "Admin"
+	RestAPI        PortName = "RestAPI"
 
 	// Default logging spec, may get overridden in specific tests
 	// For most components INFO logging is suitable
@@ -1684,7 +1685,7 @@ const (
 
 // PeerPortNames returns the list of ports that need to be reserved for a Peer.
 func PeerPortNames() []PortName {
-	return []PortName{ListenPort, ChaincodePort, EventsPort, ProfilePort, OperationsPort}
+	return []PortName{ListenPort, ChaincodePort, EventsPort, ProfilePort, OperationsPort, RestAPI}
 }
 
 // OrdererPortNames  returns the list of ports that need to be reserved for an

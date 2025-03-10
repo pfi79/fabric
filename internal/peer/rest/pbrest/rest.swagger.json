@@ -1,0 +1,307 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Hyperledger fabric peer control",
+    "version": "1.0",
+    "license": {
+      "name": "Apache-2.0"
+    }
+  },
+  "tags": [
+    {
+      "name": "API"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/peer/v1/chaincode/invoke": {
+      "get": {
+        "summary": "Invoke fabric transaction",
+        "operationId": "peerChaincodeInvoke",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbrestInvokeResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/pbrestErrorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "chaincode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ctor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "peer",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderer",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "transient",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "isInit",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "waitForEvent",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "waitForEventTimeout",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Invoke"
+        ]
+      }
+    },
+    "/peer/v1/chaincode/query": {
+      "get": {
+        "summary": "Query fabric transaction",
+        "operationId": "peerChaincodeQuery",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbrestQueryResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/pbrestErrorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "chaincode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ctor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "peer",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderer",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "transient",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/peer/v1/version": {
+      "get": {
+        "summary": "Return fabric peer version",
+        "operationId": "peerVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbrestVersionResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/pbrestErrorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Version"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pbrestErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "title": "error message"
+        }
+      },
+      "title": "ErrorResponse response with an error"
+    },
+    "pbrestInvokeResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "InvokeResponse response for peer invoke"
+    },
+    "pbrestQueryResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "QueryResponse response for peer query"
+    },
+    "pbrestVersionResponse": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "type": "string",
+          "title": "peer info version"
+        }
+      },
+      "title": "VersionResponse response for peer version"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

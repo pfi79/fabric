@@ -219,6 +219,26 @@ type Config struct {
 	// interact with fabric networks
 
 	GatewayOptions gatewayconfig.Options
+
+	// ----- Rest api config -----
+	RestAPI RestAPI
+}
+
+// RestAPI configures the rest endpoint for the peer.
+type RestAPI struct {
+	ListenAddress string
+	TLS           TLS
+}
+
+// TLS contains configuration for TLS connections.
+type TLS struct {
+	Enabled               bool
+	PrivateKey            string
+	Certificate           string
+	RootCAs               []string
+	ClientAuthRequired    bool
+	ClientRootCAs         []string
+	TLSHandshakeTimeShift time.Duration
 }
 
 // GlobalConfig obtains a set of configuration from viper, build and returns
@@ -330,6 +350,15 @@ func (c *Config) load() error {
 	c.DockerCert = config.GetPath("vm.docker.tls.cert.file")
 	c.DockerKey = config.GetPath("vm.docker.tls.key.file")
 	c.DockerCA = config.GetPath("vm.docker.tls.ca.file")
+
+	c.RestAPI.ListenAddress = viper.GetString("RestAPI.ListenAddress")
+	c.RestAPI.TLS.Enabled = viper.GetBool("RestAPI.TLS.Enabled")
+	c.RestAPI.TLS.Certificate = config.GetPath("RestAPI.TLS.Certificate")
+	c.RestAPI.TLS.PrivateKey = config.GetPath("RestAPI.TLS.PrivateKey")
+	c.RestAPI.TLS.ClientAuthRequired = viper.GetBool("RestAPI.TLS.ClientAuthRequired")
+	for _, rca := range viper.GetStringSlice("RestAPI.TLS.ClientRootCAs") {
+		c.RestAPI.TLS.ClientRootCAs = append(c.RestAPI.TLS.ClientRootCAs, config.TranslatePath(configDir, rca))
+	}
 
 	return nil
 }

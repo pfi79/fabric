@@ -247,4 +247,16 @@ metrics:
     {{- end }}
     writeInterval: 5s
     prefix: {{ ReplaceAll (ToLower Peer.ID) "." "_" }}
+
+RestAPI:
+  ListenAddress: 127.0.0.1:{{ .PeerPort Peer "RestAPI" }}
+  TLS:
+    Enabled: {{ .TLSEnabled }}
+    PrivateKey: {{ .PeerLocalTLSDir Peer }}/server.key
+    Certificate: {{ .PeerLocalTLSDir Peer }}/server.crt
+    RootCAs:
+    -  {{ .PeerLocalTLSDir Peer }}/ca.crt
+    ClientAuthRequired: {{ .ClientAuthRequired }}
+    ClientRootCAs:
+    -  {{ .PeerLocalTLSDir Peer }}/ca.crt
 `

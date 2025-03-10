@@ -305,6 +305,13 @@ func TestGlobalConfig(t *testing.T) {
 	viper.Set("metrics.statsd.writeInterval", "10s")
 	viper.Set("metrics.statsd.prefix", "testPrefix")
 
+	viper.Set("RestAPI.ListenAddress", "127.0.0.1:9444")
+	viper.Set("RestAPI.TLS.Enabled", false)
+	viper.Set("RestAPI.TLS.Certificate", "test/tls/cert/file")
+	viper.Set("RestAPI.TLS.PrivateKey", "test/tls/key/file")
+	viper.Set("RestAPI.TLS.ClientAuthRequired", false)
+	viper.Set("RestAPI.TLS.ClientRootCAs", []string{"relative/file1", "/absolute/file2"})
+
 	viper.Set("chaincode.pull", false)
 	viper.Set("chaincode.externalBuilders", &[]ExternalBuilder{
 		{
@@ -384,6 +391,20 @@ func TestGlobalConfig(t *testing.T) {
 			EndorsementTimeout: 10 * time.Second,
 			BroadcastTimeout:   10 * time.Second,
 			DialTimeout:        60 * time.Second,
+		},
+		RestAPI: RestAPI{
+			ListenAddress: "127.0.0.1:9444",
+			TLS: TLS{
+				Enabled:            false,
+				PrivateKey:         filepath.Join(cwd, "test/tls/key/file"),
+				Certificate:        filepath.Join(cwd, "test/tls/cert/file"),
+				RootCAs:            nil,
+				ClientAuthRequired: false,
+				ClientRootCAs: []string{
+					filepath.Join(cwd, "relative", "file1"),
+					"/absolute/file2",
+				},
+			},
 		},
 	}
 

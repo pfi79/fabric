@@ -88,6 +88,7 @@ import (
 	gossipprivdata "github.com/hyperledger/fabric/gossip/privdata"
 	gossipservice "github.com/hyperledger/fabric/gossip/service"
 	peergossip "github.com/hyperledger/fabric/internal/peer/gossip"
+	"github.com/hyperledger/fabric/internal/peer/rest"
 	"github.com/hyperledger/fabric/internal/peer/version"
 	"github.com/hyperledger/fabric/internal/pkg/comm"
 	"github.com/hyperledger/fabric/internal/pkg/gateway"
@@ -917,6 +918,23 @@ func serve(args []string) error {
 		}
 	}
 
+	// register the rest api server
+	restAPI := newRestAPIServer(coreConfig.RestAPI)
+	restAPI.RegisterHandler(
+		rest.URLBaseV1,
+		rest.NewRestAPIHandler(),
+		coreConfig.RestAPI.TLS.Enabled,
+	)
+	if err = restAPI.Start(); err != nil {
+		logger.Panicf("failed to start rest server: %s", err)
+	}
+	defer func() {
+		err = restAPI.Stop()
+		if err != nil {
+			logger.Errorf("failed to stop rest server: %s", err)
+		}
+	}()
+
 	// register the snapshot server
 	snapshotSvc := &snapshotgrpc.SnapshotService{LedgerGetter: peerInstance, ACLProvider: aclProvider}
 	pb.RegisterSnapshotServer(peerServer.Server(), snapshotSvc)
@@ -1290,6 +1308,20 @@ func newOperationsSystem(coreConfig *peer.Config) *operations.System {
 			},
 		},
 		Version: metadata.Version,
+	})
+}
+
+func newRestAPIServer(restConfig peer.RestAPI) *fabhttp.Server {
+	return fabhttp.NewServer(fabhttp.Options{
+		Logger:        flogging.MustGetLogger("peer.rest"),
+		ListenAddress: restConfig.ListenAddress,
+		TLS: fabhttp.TLS{
+			Enabled:            restConfig.TLS.Enabled,
+			CertFile:           restConfig.TLS.Certificate,
+			KeyFile:            restConfig.TLS.PrivateKey,
+			ClientCertRequired: restConfig.TLS.ClientAuthRequired,
+			ClientCACertFiles:  restConfig.TLS.ClientRootCAs,
+		},
 	})
 }
 
