@@ -97,7 +97,7 @@ WAL (`github.com/hyperledger-labs/SmartBFT/pkg/wal`, файлы `*.wal`).
 - `go get github.com/cockroachdb/pebble/v2@v2.1.6`
 - `go mod tidy && go mod vendor`
 
-### Этап 2: Интерфейсы — `common/ledger/util/db/`
+### Этап 2: Интерфейсы — `common/ledger/util/db/` [Done]
 
 Создать новый пакет с интерфейсами для всех низкоуровневых операций с БД.
 
@@ -106,22 +106,16 @@ WAL (`github.com/hyperledger-labs/SmartBFT/pkg/wal`, файлы `*.wal`).
 ```go
 package db
 
-// Conf — общая конфигурация для открытия БД
-type Conf struct {
-    DBPath         string
-    ExpectedFormat string
-}
-
 // DB — низкоуровневое подключение к физической БД
 type DB interface {
-    Open() error
+    Open()
     Close()
     Get(key []byte) ([]byte, error)
     Put(key, value []byte, sync bool) error
     Delete(key []byte, sync bool) error
     GetIterator(start, end []byte) (Iterator, error)
     IsEmpty() (bool, error)
-    WriteBatch(Batch, sync) error
+    WriteBatch(b Batch, sync bool) error
 }
 
 // Provider — мульти-тенантная фабрика (логические БД с префиксацией)
@@ -140,7 +134,7 @@ type DBHandle interface {
     Delete(key []byte, sync bool) error
     GetIterator(start, end []byte) (Iterator, error)
     NewUpdateBatch() Batch
-    WriteBatch(Batch, sync) error
+    WriteBatch(b Batch, sync bool) error
     IsEmpty() (bool, error)
 }
 
@@ -149,7 +143,6 @@ type Batch interface {
     Put(key, value []byte)
     Delete(key []byte)
     Len() int
-    Size() int
     Reset()
 }
 
