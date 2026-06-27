@@ -100,7 +100,7 @@ func (f *fileLedgerFactory) Close() {
 }
 
 // New creates a new ledger factory.
-// dbType selects the store, an empty or unknown value falls back to goleveldb.
+// dbType is one of "goleveldb" or "pebbledb".
 func New(directory string, dbType string, metricsProvider metrics.Provider) (blockledger.Factory, error) {
 	p, err := blkstorage.NewProvider(
 		blkstorage.NewConf(directory, -1),

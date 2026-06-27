@@ -180,7 +180,7 @@ Args:
 
 ## ledgerutil identifytxs
 ```
-usage: ledgerutil identifytxs [<flags>] <snapshotDiffsPath> [<blockStorePath>]
+usage: ledgerutil identifytxs [<flags>] <snapshotDiffsPath> [<blockStorePath>] [<blockStoreDBType>]
 
 Identify potentially divergent transactions.
 
@@ -191,19 +191,21 @@ Flags:
                              output directory. Default is the current directory.
 
 Args:
-  <snapshotDiffsPath>  Path to json file containing list of target records to
-                       search for in transactions. This is typically output from
-                       ledgerutil compare.
-  [<blockStorePath>]   Path to file system of target peer, used to access
-                       block store. Defaults to '/var/hyperledger/production'.
-                       IMPORTANT: If the configuration for target peer's file
-                       system path was changed, the new path MUST be provided.
+  <snapshotDiffsPath>   Path to json file containing list of target records to
+                        search for in transactions. This is typically output
+                        from ledgerutil compare.
+  [<blockStorePath>]    Path to file system of target peer, used to access
+                        block store. Defaults to '/var/hyperledger/production'.
+                        IMPORTANT: If the configuration for target peer's file
+                        system path was changed, the new path MUST be provided.
+  [<blockStoreDBType>]  Type of database using to block store 'goleveldb' or
+                        'pebbledb'. Defaults to 'goleveldb'.
 ```
 
 
 ## ledgerutil verify
 ```
-usage: ledgerutil verify [<flags>] [<blockStorePath>]
+usage: ledgerutil verify [<flags>] [<blockStorePath>] [<blockStoreDBType>]
 
 Verify the integrity of a ledger
 
@@ -214,10 +216,12 @@ Flags:
                              Default is the current directory.
 
 Args:
-  [<blockStorePath>]  Path to file system of target peer, used to access
-                      block store. Defaults to '/var/hyperledger/production'.
-                      IMPORTANT: If the configuration for target peer's file
-                      system path was changed, the new path MUST be provided.
+  [<blockStorePath>]    Path to file system of target peer, used to access
+                        block store. Defaults to '/var/hyperledger/production'.
+                        IMPORTANT: If the configuration for target peer's file
+                        system path was changed, the new path MUST be provided.
+  [<blockStoreDBType>]  Type of database using to block store 'goleveldb' or
+                        'pebbledb'. Defaults to 'goleveldb'.
 ```
 
 ## Exit Status

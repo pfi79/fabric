@@ -155,7 +155,7 @@ func TestNewFileLockUnknownTypeLocksTheFileOfTheLevelDBType(t *testing.T) {
 // point returns, because a single store is left to return. The shape of the
 // choice point is therefore asserted from the source instead: each of the four
 // functions has to keep a branch for the known type beside the fallback branch,
-// and to name the leveldb store once, so that a branch for the next store has
+// and to name the pebble store once, so that a branch for the next store has
 // somewhere to go.
 func TestChoicePointHasABranchForTheKnownTypeAndAFallback(t *testing.T) {
 	funcs := packageFunctions(t)
@@ -187,26 +187,26 @@ func TestChoicePointHasABranchForTheKnownTypeAndAFallback(t *testing.T) {
 				}
 			}
 
-			require.True(t, knownType, "%s has no branch for the type %q", name, db.GoLevelDB)
+			require.True(t, knownType, "%s has no branch for the type %q", name, db.PebbleDB)
 			require.True(t, fallback, "%s has no branch for an empty or unknown type", name)
-			require.Equal(t, 1, levelDBStores(funcDecl), "%s must build the leveldb store once", name)
+			require.Equal(t, 1, pebbleStores(funcDecl), "%s must build the pebble store once", name)
 		})
 	}
 }
 
 // isTypeConstant reports whether expr is a reference to the database type
-// constant that the ledger contract declares as db.GoLevelDB.
+// constant that the ledger contract declares as db.PebbleDB.
 func isTypeConstant(expr ast.Expr) bool {
 	selector, ok := expr.(*ast.SelectorExpr)
 	if !ok {
 		return false
 	}
 	packageIdent, ok := selector.X.(*ast.Ident)
-	return ok && packageIdent.Name == "db" && selector.Sel.Name == "GoLevelDB"
+	return ok && packageIdent.Name == "db" && selector.Sel.Name == "PebbleDB"
 }
 
-// levelDBStores returns the number of times the function builds a leveldb store.
-func levelDBStores(funcDecl *ast.FuncDecl) int {
+// pebbleStores returns the number of times the function builds a pebble store.
+func pebbleStores(funcDecl *ast.FuncDecl) int {
 	var count int
 	ast.Inspect(funcDecl, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
@@ -218,7 +218,7 @@ func levelDBStores(funcDecl *ast.FuncDecl) int {
 			return true
 		}
 		packageIdent, ok := selector.X.(*ast.Ident)
-		if ok && packageIdent.Name == "leveldbhelper" {
+		if ok && packageIdent.Name == "pebblehelper" {
 			count++
 		}
 		return true

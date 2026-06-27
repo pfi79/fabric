@@ -52,10 +52,11 @@ func ledgerConfig() *ledger.Config {
 	if snapshotsRootDir == "" {
 		snapshotsRootDir = filepath.Join(fsPath, "snapshots")
 	}
-	// The type of the internal KV stores is not configurable: leveldb is the
-	// only store available, so the type is decided here while the
-	// configuration is parsed, and not read from it.
-	commonDBType := ledger.GoLevelDB
+
+	commonDBType := viper.GetString("ledger.stateDatabase")
+	if commonDBType == "" {
+		commonDBType = ledger.GoLevelDB
+	}
 
 	// The state database is a separate choice, and it is resolved here so that
 	// an unset choice does not travel to the ledger as an empty type.

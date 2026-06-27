@@ -64,6 +64,7 @@ General:
     TimeWindow: 15m
 FileLedger:
   Location: {{ .OrdererDir Orderer }}/system
+  stateDatabase: {{ .StateDatabase }}
 Debug:
   BroadcastTraceDir:
   DeliverTraceDir:

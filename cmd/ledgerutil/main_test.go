@@ -81,10 +81,10 @@ func TestArguments(t *testing.T) {
 	}
 }
 
-// The store type is not a command line argument, so the commands take a path
-// only. A path is handed to the tool, while a store type is refused while the
-// command line is still being parsed.
-func TestStoreTypeIsNotAnArgument(t *testing.T) {
+// The store type is an optional command line argument, defaulting to
+// 'goleveldb'. Passing it explicitly is accepted, and the command then fails on
+// the paths rather than while parsing the command line.
+func TestStoreTypeIsAnArgument(t *testing.T) {
 	testCases := map[string]struct {
 		args           []string
 		expectedStderr string
@@ -95,7 +95,7 @@ func TestStoreTypeIsNotAnArgument(t *testing.T) {
 		},
 		"identifytxs-path-and-store-type": {
 			args:           []string{"identifytxs", "diffs.json", "fsPath", "goleveldb"},
-			expectedStderr: "unexpected goleveldb",
+			expectedStderr: identifytxsErrorMessage,
 		},
 		"verify-path": {
 			args:           []string{"verify", "fsPath"},
@@ -103,7 +103,7 @@ func TestStoreTypeIsNotAnArgument(t *testing.T) {
 		},
 		"verify-path-and-store-type": {
 			args:           []string{"verify", "fsPath", "goleveldb"},
-			expectedStderr: "unexpected goleveldb",
+			expectedStderr: verifyErrorMessage,
 		},
 	}
 
@@ -132,22 +132,22 @@ func TestStoreTypeIsNotAnArgument(t *testing.T) {
 	}
 }
 
-// The store type is not a command line argument, so the usage of the commands
-// lists a path only.
-func TestUsageTakesAPathOnly(t *testing.T) {
+// The store type is an optional argument, so the usage of the commands lists it
+// after the path.
+func TestUsageListsAStoreType(t *testing.T) {
 	testCases := map[string]struct {
 		command string
-		// The whole usage line, so that an argument in addition to the path
-		// does not go unnoticed.
+		// The whole usage line, so that an argument in addition to the store
+		// type does not go unnoticed.
 		expectedUsage string
 	}{
 		"identifytxs": {
 			command:       "identifytxs",
-			expectedUsage: "usage: ledgerutil identifytxs [<flags>] <snapshotDiffsPath> [<blockStorePath>]",
+			expectedUsage: "usage: ledgerutil identifytxs [<flags>] <snapshotDiffsPath> [<blockStorePath>] [<blockStoreDBType>]",
 		},
 		"verify": {
 			command:       "verify",
-			expectedUsage: "usage: ledgerutil verify [<flags>] [<blockStorePath>]",
+			expectedUsage: "usage: ledgerutil verify [<flags>] [<blockStorePath>] [<blockStoreDBType>]",
 		},
 	}
 

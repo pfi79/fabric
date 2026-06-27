@@ -9,6 +9,7 @@ package ledger
 // Supported database types.
 const (
 	GoLevelDB = "goleveldb"
+	PebbleDB  = "pebbledb"
 )
 
 // DB is a low-level connection to a physical database.

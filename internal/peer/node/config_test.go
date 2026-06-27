@@ -64,38 +64,6 @@ func TestLedgerConfig(t *testing.T) {
 			},
 		},
 		{
-			// The store type is no longer configurable, so a configuration
-			// written by an operator that still names a store must not change
-			// the type of the internal KV stores.
-			name: "store type is not configurable",
-			config: map[string]any{
-				"peer.fileSystemPath":        "/peerfs",
-				"ledger.stateDatabase":       "someKVStore",
-				"ledger.state.stateDatabase": ledger.GoLevelDB,
-			},
-			expected: &ledger.Config{
-				RootFSPath:    "/peerfs/ledgersData",
-				StateDatabase: ledger.GoLevelDB,
-				StateDBConfig: &ledger.StateDBConfig{
-					StateDatabase: ledger.GoLevelDB,
-					CouchDB:       &ledger.CouchDBConfig{},
-				},
-				PrivateDataConfig: &ledger.PrivateDataConfig{
-					MaxBatchSize:                        5000,
-					BatchesInterval:                     1000,
-					PurgeInterval:                       100,
-					DeprioritizedDataReconcilerInterval: 60 * time.Minute,
-					PurgedKeyAuditLogging:               true,
-				},
-				HistoryDBConfig: &ledger.HistoryDBConfig{
-					Enabled: false,
-				},
-				SnapshotsConfig: &ledger.SnapshotsConfig{
-					RootDir: "/peerfs/snapshots",
-				},
-			},
-		},
-		{
 			name: "CouchDB Defaults",
 			config: map[string]any{
 				"peer.fileSystemPath":                              "/peerfs",

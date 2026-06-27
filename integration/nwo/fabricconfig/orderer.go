@@ -97,7 +97,8 @@ type OrdererTopic struct {
 }
 
 type FileLedger struct {
-	Location string `yaml:"Location,omitempty"`
+	Location      string `yaml:"Location,omitempty"`
+	StateDatabase string `yaml:"stateDatabase,omitempty"`
 }
 
 type Kafka struct {

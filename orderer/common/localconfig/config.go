@@ -115,11 +115,8 @@ type Profile struct {
 
 // FileLedger contains configuration for the file-based ledger.
 type FileLedger struct {
-	Location string
-	// StateDatabase is the type of the KV store backing the file ledger. It is
-	// not read from the configuration file: the store cannot be chosen, so the
-	// type is set while the configuration is initialized.
-	StateDatabase string `mapstructure:"-"`
+	Location      string
+	StateDatabase string
 	Prefix        string // For compatibility only. This setting is no longer supported.
 }
 

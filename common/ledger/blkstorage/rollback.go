@@ -27,7 +27,7 @@ type rollbackMgr struct {
 }
 
 // Rollback reverts changes made to the block store beyond a given block number.
-// dbType selects the store, an empty or unknown value falls back to goleveldb.
+// dbType is one of "goleveldb" or "pebbledb".
 func Rollback(blockStorageDir, ledgerID string, targetBlockNum uint64, indexConfig *IndexConfig, dbType string) error {
 	r, err := newRollbackMgr(blockStorageDir, ledgerID, indexConfig, targetBlockNum, dbType)
 	if err != nil {

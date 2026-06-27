@@ -45,8 +45,7 @@ type PrivateDataConfig struct {
 	// It is internally computed by the ledger component,
 	// so it is not in ledger.PrivateDataConfig and not exposed to other components.
 	StorePath string
-	// DBType is the type of database to use. An unknown or empty value falls
-	// back to leveldb at the store selection point, without an error.
+	// DBType is the type of database to use (goleveldb or pebbledb)
 	DBType string
 }
 

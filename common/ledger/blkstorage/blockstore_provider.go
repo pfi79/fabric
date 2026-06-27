@@ -58,7 +58,7 @@ type BlockStoreProvider struct {
 }
 
 // NewProvider constructs a filesystem based block store provider.
-// dbType selects the store, an empty or unknown value falls back to goleveldb.
+// dbType is one of "goleveldb" or "pebbledb".
 func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.Provider, dbType string) (*BlockStoreProvider, error) {
 	prov, err := dbfactory.NewProvider(dbType, conf.getIndexDir(), dataFormatVersion(indexConfig))
 	if err != nil {

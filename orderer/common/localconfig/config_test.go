@@ -228,10 +228,7 @@ FileLedger:
 		require.Equal(t, db.GoLevelDB, cfg.FileLedger.StateDatabase)
 	})
 
-	t.Run("config that still names a store", func(t *testing.T) {
-		// The store type is not part of the configuration format. The
-		// configuration is decoded exactly, so a leftover key is rejected
-		// rather than selecting a store.
+	t.Run("config that names a store", func(t *testing.T) {
 		name := t.TempDir()
 
 		content := `---
@@ -248,8 +245,9 @@ FileLedger:
 		t.Setenv("FABRIC_CFG_PATH", name)
 
 		cc := &configCache{}
-		_, err = cc.load()
-		require.ErrorContains(t, err, "has invalid keys: stateDatabase")
+		cfg, err := cc.load()
+		require.NoError(t, err, "Load good config returned unexpected error")
+		require.Equal(t, "someKVStore", cfg.FileLedger.StateDatabase)
 	})
 }
 

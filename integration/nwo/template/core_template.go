@@ -205,6 +205,7 @@ chaincode:
   {{- end }}
 
 ledger:
+  stateDatabase: {{ .StateDatabase }}
   blockchain:
   state:
     stateDatabase: {{ .StateStateDatabase }}
