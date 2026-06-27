@@ -92,7 +92,7 @@ WAL (`github.com/hyperledger-labs/SmartBFT/pkg/wal`, файлы `*.wal`).
 
 ## План изменений
 
-### Этап 1: Версионирование
+### Этап 1: Версионирование [Done]
 
 - `go get github.com/cockroachdb/pebble/v2@v2.1.6`
 - `go mod tidy && go mod vendor`
