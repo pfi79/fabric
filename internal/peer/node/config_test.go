@@ -23,15 +23,16 @@ func TestLedgerConfig(t *testing.T) {
 		expected *ledger.Config
 	}{
 		{
-			name: "goleveldb",
+			name: ledger.GoLevelDB,
 			config: map[string]any{
 				"peer.fileSystemPath":        "/peerfs",
-				"ledger.state.stateDatabase": "goleveldb",
+				"ledger.state.stateDatabase": ledger.GoLevelDB,
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
-					StateDatabase: "goleveldb",
+					StateDatabase: ledger.GoLevelDB,
 					CouchDB:       &ledger.CouchDBConfig{},
 				},
 				PrivateDataConfig: &ledger.PrivateDataConfig{
@@ -64,7 +65,8 @@ func TestLedgerConfig(t *testing.T) {
 				"ledger.state.couchDBConfig.cacheSize":             64,
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
 					StateDatabase: "CouchDB",
 					CouchDB: &ledger.CouchDBConfig{
@@ -78,6 +80,7 @@ func TestLedgerConfig(t *testing.T) {
 						MaxBatchUpdateSize:    500,
 						CreateGlobalChangesDB: true,
 						RedoLogPath:           "/peerfs/ledgersData/couchdbRedoLogs",
+						RedoLogDBType:         ledger.GoLevelDB,
 						UserCacheSizeMBs:      64,
 					},
 				},
@@ -120,7 +123,8 @@ func TestLedgerConfig(t *testing.T) {
 				"ledger.snapshots.rootDir":                                "/peerfs/customLocationForsnapshots",
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
 					StateDatabase: "CouchDB",
 					CouchDB: &ledger.CouchDBConfig{
@@ -134,6 +138,7 @@ func TestLedgerConfig(t *testing.T) {
 						MaxBatchUpdateSize:    600,
 						CreateGlobalChangesDB: true,
 						RedoLogPath:           "/peerfs/ledgersData/couchdbRedoLogs",
+						RedoLogDBType:         ledger.GoLevelDB,
 						UserCacheSizeMBs:      64,
 					},
 				},

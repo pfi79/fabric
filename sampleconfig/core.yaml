@@ -678,11 +678,18 @@ chaincode:
 #
 ###############################################################################
 ledger:
+  # stateDatabase - options are "goleveldb", "pebbledb"
+  # Common database type for all internal KV stores (bookkeeping, pvtdata,
+  # transient store, redo-log, block index). Individual sections below
+  # (state) can override this value.
+  stateDatabase: goleveldb
+
   blockchain:
 
   state:
-    # stateDatabase - options are "goleveldb", "CouchDB"
+    # stateDatabase - options are "goleveldb", "pebbledb", "CouchDB"
     # goleveldb - default state database stored in goleveldb.
+    # pebbledb - store state database in PebbleDB
     # CouchDB - store state database in CouchDB
     stateDatabase: goleveldb
     # Limit on the number of records to return per query

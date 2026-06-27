@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	GoLevelDB = "goleveldb"
+	GoLevelDB = commonledger.GoLevelDB
 	CouchDB   = "CouchDB"
 )
 
@@ -45,6 +45,10 @@ type Initializer struct {
 type Config struct {
 	// RootFSPath is the top-level directory where ledger files are stored.
 	RootFSPath string
+	// StateDatabase is the common database type for all internal KV stores.
+	// Supported options are "goleveldb" and "pebbledb".
+	// Individual configs (StateDBConfig) can override this.
+	StateDatabase string
 	// StateDBConfig holds the configuration parameters for the state database.
 	StateDBConfig *StateDBConfig
 	// PrivateDataConfig holds the configuration parameters for the private data store.
@@ -58,7 +62,7 @@ type Config struct {
 // StateDBConfig is a structure used to configure the state parameters for the ledger.
 type StateDBConfig struct {
 	// StateDatabase is the database to use for storing last known state.  The
-	// two supported options are "goleveldb" and "CouchDB" (captured in the constants GoLevelDB and CouchDB respectively).
+	// supported options are "goleveldb", "pebbledb", and "CouchDB" (captured in the constants GoLevelDB, PebbleDB, and CouchDB respectively).
 	StateDatabase string
 	// CouchDB is the configuration for CouchDB.  It is used when StateDatabase
 	// is set to "CouchDB".
@@ -93,6 +97,8 @@ type CouchDBConfig struct {
 	CreateGlobalChangesDB bool
 	// RedoLogPath is the directory where the CouchDB redo log files are stored.
 	RedoLogPath string
+	// RedoLogDBType is the type of database used for the redo log (e.g., "goleveldb", "pebbledb").
+	RedoLogDBType string
 	// UserCacheSizeMBs denotes the user specified maximum mega bytes (MB) to be allocated
 	// for the user state cache (i.e., all chaincodes deployed by the user). Note that
 	// UserCacheSizeMBs needs to be a multiple of 32 MB. If it is not a multiple of 32 MB,
