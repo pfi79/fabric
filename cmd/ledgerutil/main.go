@@ -27,10 +27,12 @@ const (
 		"from ledgerutil compare."
 	blockStorePathDesc = "Path to file system of target peer, used to access block store. Defaults to '/var/hyperledger/production'. " +
 		"IMPORTANT: If the configuration for target peer's file system path was changed, the new path MUST be provided."
-	blockStorePathDefault = "/var/hyperledger/production"
-	outputDirIdDesc       = "Location for identified transactions json results output directory. Default is the current directory."
-	verifyErrorMessage    = "Verify Ledger Error:"
-	outputDirVerifyDesc   = "Location for verification result output directory. Default is the current directory."
+	blockStorePathDefault   = "/var/hyperledger/production"
+	blockStoreDBTypeDesc    = "Type of database using to block store 'goleveldb' or 'pebbledb'. Defaults to 'goleveldb'."
+	blockStoreDBTypeDefault = "goleveldb"
+	outputDirIdDesc         = "Location for identified transactions json results output directory. Default is the current directory."
+	verifyErrorMessage      = "Verify Ledger Error:"
+	outputDirVerifyDesc     = "Location for verification result output directory. Default is the current directory."
 )
 
 var (
@@ -45,11 +47,13 @@ var (
 	identifytxsApp    = app.Command("identifytxs", "Identify potentially divergent transactions.")
 	snapshotDiffsPath = identifytxsApp.Arg("snapshotDiffsPath", snapshotDiffsPathDesc).Required().String()
 	blockStorePath    = identifytxsApp.Arg("blockStorePath", blockStorePathDesc).Default(blockStorePathDefault).String()
+	blockStoreDBType  = identifytxsApp.Arg("blockStoreDBType", blockStoreDBTypeDesc).Default(blockStoreDBTypeDefault).String()
 	outputDirId       = identifytxsApp.Flag("outputDir", outputDirIdDesc).Short('o').String()
 
-	verifyApp            = app.Command("verify", "Verify the integrity of a ledger")
-	blockStorePathVerify = verifyApp.Arg("blockStorePath", blockStorePathDesc).Default(blockStorePathDefault).String()
-	outputDirVerify      = verifyApp.Flag("outputDir", outputDirVerifyDesc).Short('o').String()
+	verifyApp              = app.Command("verify", "Verify the integrity of a ledger")
+	blockStorePathVerify   = verifyApp.Arg("blockStorePath", blockStorePathDesc).Default(blockStorePathDefault).String()
+	blockStoreDBTypeVerify = verifyApp.Arg("blockStoreDBType", blockStoreDBTypeDesc).Default(blockStoreDBTypeDefault).String()
+	outputDirVerify        = verifyApp.Flag("outputDir", outputDirVerifyDesc).Short('o').String()
 
 	args = os.Args[1:]
 )
@@ -101,7 +105,7 @@ func main() {
 			}
 		}
 
-		firstBlock, lastBlock, err := identifytxs.IdentifyTxs(*snapshotDiffsPath, *blockStorePath, *outputDirId)
+		firstBlock, lastBlock, err := identifytxs.IdentifyTxs(*snapshotDiffsPath, *blockStorePath, *blockStoreDBType, *outputDirId)
 		if err != nil {
 			fmt.Printf("%s%s\n", identifytxsErrorMessage, err)
 			os.Exit(1)
@@ -123,7 +127,7 @@ func main() {
 			}
 		}
 
-		valid, err := verify.VerifyLedger(*blockStorePathVerify, *outputDirVerify)
+		valid, err := verify.VerifyLedger(*blockStorePathVerify, *blockStoreDBTypeVerify, *outputDirVerify)
 		if err != nil {
 			fmt.Printf("%s%s\n", verifyErrorMessage, err)
 			os.Exit(1)

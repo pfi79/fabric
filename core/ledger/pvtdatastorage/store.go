@@ -15,7 +15,8 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	db "github.com/hyperledger/fabric/common/ledger"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
@@ -32,7 +33,7 @@ var logger = flogging.MustGetLogger("pvtdatastorage")
 // Provider provides handle to specific 'Store' that in turn manages
 // private write sets for a ledger
 type Provider struct {
-	dbProvider *leveldbhelper.Provider
+	dbProvider db.Provider
 	pvtData    *PrivateDataConfig
 }
 
@@ -44,11 +45,13 @@ type PrivateDataConfig struct {
 	// It is internally computed by the ledger component,
 	// so it is not in ledger.PrivateDataConfig and not exposed to other components.
 	StorePath string
+	// DBType is the type of database to use (goleveldb or pebbledb)
+	DBType string
 }
 
 // Store manages the permanent storage of private write sets for a ledger
 type Store struct {
-	db                    *leveldbhelper.DBHandle
+	db                    db.DBHandle
 	ledgerid              string
 	btlPolicy             pvtdatapolicy.BTLPolicy
 	batchesInterval       int
@@ -179,12 +182,7 @@ type lastUpdatedOldBlocksList []uint64
 
 // NewProvider instantiates a StoreProvider
 func NewProvider(conf *PrivateDataConfig) (*Provider, error) {
-	dbProvider, err := leveldbhelper.NewProvider(
-		&leveldbhelper.Conf{
-			DBPath:         conf.StorePath,
-			ExpectedFormat: currentDataVersion,
-		},
-	)
+	dbProvider, err := dbfactory.NewProvider(conf.DBType, conf.StorePath, currentDataVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +216,7 @@ func (p *Provider) SnapshotDataImporterFor(
 		membershipProvider,
 		configHistoryRetriever,
 		tempDirRoot,
+		p.pvtData.DBType,
 	)
 }
 
@@ -1194,8 +1193,8 @@ func (c *collElgProcSync) waitForDone() {
 
 type purgeUpdatesProcessor struct {
 	ledgerid     string
-	db           *leveldbhelper.DBHandle
-	batch        *leveldbhelper.UpdateBatch
+	db           db.DBHandle
+	batch        db.Batch
 	maxBatchSize int
 
 	pvtWrites map[string]*rwsetutil.CollPvtRwSet
@@ -1206,7 +1205,7 @@ type purgeUpdatesProcessor struct {
 
 // newPurgeUpdatesProcessor is used for processing the purge markers - i.e., delete the private data versions that are marked for purge from
 // the pvtdata store.
-func newPurgeUpdatesProcessor(ledgerid string, db *leveldbhelper.DBHandle, purgedKeyAuditLogging bool, maxBatchSize int) *purgeUpdatesProcessor {
+func newPurgeUpdatesProcessor(ledgerid string, db db.DBHandle, purgedKeyAuditLogging bool, maxBatchSize int) *purgeUpdatesProcessor {
 	return &purgeUpdatesProcessor{
 		ledgerid:              ledgerid,
 		db:                    db,

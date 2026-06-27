@@ -205,9 +205,10 @@ chaincode:
   {{- end }}
 
 ledger:
+  stateDatabase: {{ .StateDatabase }}
   blockchain:
   state:
-    stateDatabase: goleveldb
+    stateDatabase: {{ .StateStateDatabase }}
     couchDBConfig:
       couchDBAddress: 127.0.0.1:5984
       username:

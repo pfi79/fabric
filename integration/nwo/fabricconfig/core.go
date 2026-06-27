@@ -302,9 +302,10 @@ type SystemFlags struct {
 
 type Ledger struct {
 	// Blockchain - not sure if it's needed
-	State        *StateConfig   `yaml:"state,omitempty"`
-	History      *HistoryConfig `yaml:"history,omitempty"`
-	PvtdataStore *PvtdataStore  `yaml:"pvtdataStore,omitempty"`
+	StateDatabase string         `yaml:"stateDatabase,omitempty"`
+	State         *StateConfig   `yaml:"state,omitempty"`
+	History       *HistoryConfig `yaml:"history,omitempty"`
+	PvtdataStore  *PvtdataStore  `yaml:"pvtdataStore,omitempty"`
 }
 
 type StateConfig struct {

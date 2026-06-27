@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric/internal/peer/common"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func unjoinCmd() *cobra.Command {
@@ -49,7 +50,7 @@ func unjoinChannel(channelID string) error {
 	// By removing the transient storage prior to deleting the ledger, a crash may be recovered by re-running
 	// the peer unjoin.
 	transientStoragePath := filepath.Join(coreconfig.GetPath("peer.fileSystemPath"), "transientstore")
-	if err := transientstore.Drop(transientStoragePath, channelID); err != nil {
+	if err := transientstore.Drop(transientStoragePath, channelID, viper.GetString("ledger.stateDatabase")); err != nil {
 		return err
 	}
 
