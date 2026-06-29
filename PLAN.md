@@ -157,7 +157,7 @@ type Iterator interface {
 }
 ```
 
-### Этап 3: Рефакторинг `leveldbhelper` — имплементация интерфейсов
+### Этап 3: Рефакторинг `leveldbhelper` — имплементация интерфейсов [Done]
 
 **`common/ledger/util/leveldbhelper/`:**
 
