@@ -172,7 +172,7 @@ type Iterator interface {
 - Старые имена (`*Provider`, `*DBHandle`) остаются как алиасы (или удалить
   — потребители всё равно переходят на интерфейсы)
 
-### Этап 4: PebbleDB helper — `common/ledger/util/pebblehelper/`
+### Этап 4: PebbleDB helper — `common/ledger/util/pebblehelper/` [Done]
 
 **Новый пакет**, имплементирующий те же интерфейсы `db.*` для PebbleDB.
 
