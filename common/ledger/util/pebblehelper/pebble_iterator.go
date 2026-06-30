@@ -65,3 +65,13 @@ func (itr *PebbleIterator) Seek(key []byte) bool {
 	}
 	return itr.iter.SeekGE(pebbleKey)
 }
+
+// Prev moves the iterator to the prev key/value pair.
+// The first call to Prev positions at the last key, subsequent calls advance.
+func (itr *PebbleIterator) Prev() bool {
+	if !itr.started {
+		itr.started = true
+		return itr.iter.Last()
+	}
+	return itr.iter.Prev()
+}

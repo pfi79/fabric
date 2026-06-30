@@ -194,7 +194,7 @@ type Iterator interface {
 - `pebble.DB.WriteBatch()` заменяется на `batch.Commit(pebble.Sync)`
 - Отдельные опции кэша и compaction
 
-### Этап 5: StateDB на Pebble — `statepebbledb`
+### Этап 5: StateDB на Pebble — `statepebbledb` [Done]
 
 **`core/ledger/kvledger/txmgmt/statedb/statepebbledb/`** — по образу `stateleveldb/`.
 

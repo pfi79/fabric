@@ -54,4 +54,5 @@ type Iterator interface {
 	Error() error
 	Release()
 	Seek(key []byte) bool
+	Prev() bool
 }
