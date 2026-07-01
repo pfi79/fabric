@@ -209,7 +209,7 @@ type Iterator interface {
 - Итераторы (`kvScanner`, `fullDBScanner`) работают через `pebblehelper.Iterator`
 - Кодирование/декодирование ключей и значений — идентично stateleveldb
 
-### Этап 6: Переключатель state DB
+### Этап 6: Переключатель state DB [Done]
 
 **`core/ledger/ledger_interface.go`:**
 ```go

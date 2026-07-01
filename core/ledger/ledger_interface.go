@@ -25,6 +25,7 @@ import (
 
 const (
 	GoLevelDB = "goleveldb"
+	PebbleDB  = "pebbledb"
 	CouchDB   = "CouchDB"
 )
 
@@ -58,7 +59,7 @@ type Config struct {
 // StateDBConfig is a structure used to configure the state parameters for the ledger.
 type StateDBConfig struct {
 	// StateDatabase is the database to use for storing last known state.  The
-	// two supported options are "goleveldb" and "CouchDB" (captured in the constants GoLevelDB and CouchDB respectively).
+	// supported options are "goleveldb", "pebbledb", and "CouchDB" (captured in the constants GoLevelDB, PebbleDB, and CouchDB respectively).
 	StateDatabase string
 	// CouchDB is the configuration for CouchDB.  It is used when StateDatabase
 	// is set to "CouchDB".
