@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
 	"github.com/hyperledger/fabric/internal/fileutil"
@@ -273,7 +274,7 @@ func getBlockStoreProvider(fsPath string) (*blkstorage.BlockStoreProvider, error
 	}
 	metricsProvider := &disabled.Provider{}
 	// Create new block store provider
-	blockStoreProvider, err := blkstorage.NewProvider(conf, indexConfig, metricsProvider)
+	blockStoreProvider, err := blkstorage.NewProvider(conf, indexConfig, metricsProvider, ledger.GoLevelDB)
 	if err != nil {
 		return nil, err
 	}

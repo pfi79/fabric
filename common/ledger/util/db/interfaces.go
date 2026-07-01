@@ -6,6 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 package db
 
+// Supported database types.
+const (
+	GoLevelDB = "goleveldb"
+	PebbleDB  = "pebbledb"
+)
+
 // DB is a low-level connection to a physical database.
 type DB interface {
 	Open()

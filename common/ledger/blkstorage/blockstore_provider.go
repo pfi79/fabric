@@ -13,7 +13,9 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-lib-go/common/metrics"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/internal/fileutil"
 	"github.com/pkg/errors"
 )
@@ -50,20 +52,32 @@ func (c *IndexConfig) Contains(indexableAttr IndexableAttr) bool {
 
 // BlockStoreProvider provides handle to block storage - this is not thread-safe
 type BlockStoreProvider struct {
-	conf            *Conf
-	indexConfig     *IndexConfig
-	leveldbProvider *leveldbhelper.Provider
-	stats           *stats
+	conf        *Conf
+	indexConfig *IndexConfig
+	dbProvider  db.Provider
+	stats       *stats
 }
 
-// NewProvider constructs a filesystem based block store provider
-func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.Provider) (*BlockStoreProvider, error) {
+// NewProvider constructs a filesystem based block store provider.
+// dbType is one of "goleveldb" or "pebbledb".
+func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.Provider, dbType string) (*BlockStoreProvider, error) {
 	dbConf := &leveldbhelper.Conf{
 		DBPath:         conf.getIndexDir(),
 		ExpectedFormat: dataFormatVersion(indexConfig),
 	}
 
-	p, err := leveldbhelper.NewProvider(dbConf)
+	var prov db.Provider
+	var err error
+	switch dbType {
+	case db.PebbleDB:
+		pbConf := &pebblehelper.Conf{
+			DBPath:         conf.getIndexDir(),
+			ExpectedFormat: dataFormatVersion(indexConfig),
+		}
+		prov, err = pebblehelper.NewProvider(pbConf)
+	default:
+		prov, err = leveldbhelper.NewProvider(dbConf)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +95,14 @@ func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.P
 	}
 
 	stats := newStats(metricsProvider)
-	return &BlockStoreProvider{conf, indexConfig, p, stats}, nil
+	return &BlockStoreProvider{conf, indexConfig, prov, stats}, nil
 }
 
 // Open opens a block store for given ledgerid.
 // If a blockstore is not existing, this method creates one
 // This method should be invoked only once for a particular ledgerid
 func (p *BlockStoreProvider) Open(ledgerid string) (*BlockStore, error) {
-	indexStoreHandle := p.leveldbProvider.GetDBHandle(ledgerid)
+	indexStoreHandle := p.dbProvider.GetDBHandle(ledgerid)
 	return newBlockStore(ledgerid, p.conf, p.indexConfig, indexStoreHandle, p.stats)
 }
 
@@ -101,7 +115,7 @@ func (p *BlockStoreProvider) ImportFromSnapshot(
 	snapshotDir string,
 	snapshotInfo *SnapshotInfo,
 ) error {
-	indexStoreHandle := p.leveldbProvider.GetDBHandle(ledgerID)
+	indexStoreHandle := p.dbProvider.GetDBHandle(ledgerID)
 	if err := bootstrapFromSnapshottedTxIDs(ledgerID, snapshotDir, snapshotInfo, p.conf, indexStoreHandle); err != nil {
 		return err
 	}
@@ -127,7 +141,7 @@ func (p *BlockStoreProvider) Drop(ledgerid string) error {
 	if !exists {
 		return nil
 	}
-	if err := p.leveldbProvider.Drop(ledgerid); err != nil {
+	if err := p.dbProvider.Drop(ledgerid); err != nil {
 		return err
 	}
 	if err := os.RemoveAll(p.conf.getLedgerBlockDir(ledgerid)); err != nil {
@@ -143,7 +157,7 @@ func (p *BlockStoreProvider) List() ([]string, error) {
 
 // Close closes the BlockStoreProvider
 func (p *BlockStoreProvider) Close() {
-	p.leveldbProvider.Close()
+	p.dbProvider.Close()
 }
 
 func dataFormatVersion(indexConfig *IndexConfig) string {

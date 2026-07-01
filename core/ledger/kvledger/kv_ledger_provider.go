@@ -146,6 +146,7 @@ func (p *Provider) initBlockStoreProvider() error {
 		),
 		indexConfig,
 		p.initializer.MetricsProvider,
+		ledger.GoLevelDB,
 	)
 	if err != nil {
 		return err

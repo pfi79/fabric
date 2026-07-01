@@ -70,6 +70,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		),
 		&blkstorage.IndexConfig{AttrsToIndex: attrsToIndex},
 		&disabled.Provider{},
+		ledger.GoLevelDB,
 	)
 	if err != nil {
 		return err

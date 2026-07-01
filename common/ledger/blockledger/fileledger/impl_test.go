@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger/fabric/common/ledger/blkstorage/blkstoragetest"
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
 	"github.com/hyperledger/fabric/common/ledger/testutil"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,7 +41,7 @@ type testEnv struct {
 func initialize(t *testing.T) (*testEnv, *FileLedger) {
 	name := t.TempDir()
 
-	p, err := New(name, &disabled.Provider{})
+	p, err := New(name, db.GoLevelDB, &disabled.Provider{})
 	require.NoError(t, err)
 	flf := p.(*fileLedgerFactory)
 	fl, err := flf.GetOrCreate("testchannelid")
@@ -153,7 +154,7 @@ func TestReinitialization(t *testing.T) {
 	tev.shutDown()
 
 	// re-initialize the ledger provider (not the test ledger itself!)
-	provider2, err := New(tev.location, &disabled.Provider{})
+	provider2, err := New(tev.location, db.GoLevelDB, &disabled.Provider{})
 	require.NoError(t, err)
 
 	// assert expected ledgers exist

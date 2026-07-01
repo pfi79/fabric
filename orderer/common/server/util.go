@@ -18,6 +18,7 @@ import (
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
 	"github.com/hyperledger/fabric/common/ledger/blockledger/fileledger"
 	"github.com/hyperledger/fabric/common/util"
+	"github.com/hyperledger/fabric/core/ledger"
 	config "github.com/hyperledger/fabric/orderer/common/localconfig"
 	"github.com/hyperledger/fabric/orderer/common/throttle"
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ func createLedgerFactory(conf *config.TopLevel, metricsProvider metrics.Provider
 	}
 
 	logger.Debug("Ledger dir:", ld)
-	lf, err := fileledger.New(ld, metricsProvider)
+	lf, err := fileledger.New(ld, ledger.GoLevelDB, metricsProvider)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Error in opening ledger factory")
 	}

@@ -256,7 +256,7 @@ type FileLedger struct {
 }
 ```
 
-### Этап 8: Blkstorage — прокидывание типа БД
+### Этап 8: Blkstorage — прокидывание типа БД [Done]
 
 **`common/ledger/blkstorage/`**
 

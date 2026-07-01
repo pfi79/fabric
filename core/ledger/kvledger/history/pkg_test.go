@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/privacyenabledstate"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/txmgr"
@@ -108,7 +109,7 @@ func newBlockStorageTestEnv(t testing.TB) *testBlockStoreEnv {
 	}
 	indexConfig := &blkstorage.IndexConfig{AttrsToIndex: attrsToIndex}
 
-	p, err := blkstorage.NewProvider(conf, indexConfig, &disabled.Provider{})
+	p, err := blkstorage.NewProvider(conf, indexConfig, &disabled.Provider{}, ledger.GoLevelDB)
 	require.NoError(t, err)
 	return &testBlockStoreEnv{t, p, testPath}
 }
