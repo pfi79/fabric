@@ -681,8 +681,9 @@ ledger:
   blockchain:
 
   state:
-    # stateDatabase - options are "goleveldb", "CouchDB"
+    # stateDatabase - options are "goleveldb", "pebbledb", "CouchDB"
     # goleveldb - default state database stored in goleveldb.
+    # pebbledb - store state database in PebbleDB
     # CouchDB - store state database in CouchDB
     stateDatabase: goleveldb
     # Limit on the number of records to return per query
@@ -731,6 +732,8 @@ ledger:
     # All history 'index' will be stored in goleveldb, regardless if using
     # CouchDB or alternate database for the state.
     enableHistoryDatabase: true
+    # stateDatabase - options are "goleveldb", "pebbledb"
+    stateDatabase: goleveldb
 
   pvtdataStore:
     # the maximum db batch size for converting

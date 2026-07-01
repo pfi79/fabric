@@ -226,7 +226,7 @@ case ledger.PebbleDB:
     vdbProvider, err = statepebbledb.NewVersionedDBProvider(stateDBConf.LevelDBPath)
 ```
 
-### Этап 7: Конфигурация
+### Этап 7: Конфигурация [Done]
 
 **`sampleconfig/core.yaml`** (peer):
 ```yaml

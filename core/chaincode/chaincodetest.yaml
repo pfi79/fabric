@@ -379,8 +379,9 @@ ledger:
   blockchain:
 
   state:
-    # stateDatabase - options are "goleveldb", "CouchDB"
+    # stateDatabase - options are "goleveldb", "pebbledb", "CouchDB"
     # goleveldb - default state database stored in goleveldb.
+    # pebbledb - store state database in PebbleDB
     # CouchDB - store state database in CouchDB
     stateDatabase: goleveldb
     couchDBConfig:

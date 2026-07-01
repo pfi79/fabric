@@ -114,8 +114,9 @@ type Profile struct {
 
 // FileLedger contains configuration for the file-based ledger.
 type FileLedger struct {
-	Location string
-	Prefix   string // For compatibility only. This setting is no longer supported.
+	Location      string
+	StateDatabase string
+	Prefix        string // For compatibility only. This setting is no longer supported.
 }
 
 // Debug contains configuration for the orderer's debug parameters.
