@@ -97,7 +97,7 @@ func TestV11CommitHashes(t *testing.T) {
 			"testdata/v11/sample_ledgers/ledgersData.zip",
 			false,
 			func(h *testLedger, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0))
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0, ledger.GoLevelDB))
 			},
 			true,
 		},
@@ -107,7 +107,7 @@ func TestV11CommitHashes(t *testing.T) {
 			"testdata/v11/sample_ledgers/ledgersData.zip",
 			false,
 			func(h *testLedger, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1))
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1, ledger.GoLevelDB))
 			},
 			false,
 		},
@@ -127,7 +127,7 @@ func TestV11CommitHashes(t *testing.T) {
 			"testdata/v11/sample_ledgers_with_commit_hashes/ledgersData.zip",
 			true,
 			func(h *testLedger, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0))
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, 0, ledger.GoLevelDB))
 			},
 			true,
 		},
@@ -137,7 +137,7 @@ func TestV11CommitHashes(t *testing.T) {
 			"testdata/v11/sample_ledgers_with_commit_hashes/ledgersData.zip",
 			true,
 			func(h *testLedger, ledgerFSRoot string) {
-				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1))
+				require.NoError(t, kvledger.RollbackKVLedger(ledgerFSRoot, h.lgrid, h.currentHeight()/2+1, ledger.GoLevelDB))
 			},
 			true,
 		},

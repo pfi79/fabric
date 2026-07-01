@@ -9,6 +9,7 @@ package bookkeeping
 import (
 	"fmt"
 
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 )
 
@@ -26,7 +27,7 @@ const (
 
 // Provider provides db handle to different bookkeepers
 type Provider struct {
-	dbProvider *leveldbhelper.Provider
+	dbProvider db.Provider
 }
 
 // NewProvider instantiates a new provider
@@ -39,7 +40,7 @@ func NewProvider(dbPath string) (*Provider, error) {
 }
 
 // GetDBHandle implements the function in the interface 'BookkeeperProvider'
-func (p *Provider) GetDBHandle(ledgerID string, cat Category) *leveldbhelper.DBHandle {
+func (p *Provider) GetDBHandle(ledgerID string, cat Category) db.DBHandle {
 	return p.dbProvider.GetDBHandle(dbName(ledgerID, cat))
 }
 

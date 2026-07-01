@@ -12,6 +12,7 @@ import (
 
 	bccsp "github.com/hyperledger/fabric-lib-go/bccsp/factory"
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/viperutil"
 	coreconfig "github.com/hyperledger/fabric/core/config"
 	"github.com/hyperledger/fabric/internal/pkg/comm"
@@ -205,7 +206,8 @@ var Defaults = TopLevel{
 		},
 	},
 	FileLedger: FileLedger{
-		Location: "/var/hyperledger/production/orderer",
+		Location:      "/var/hyperledger/production/orderer",
+		StateDatabase: db.GoLevelDB,
 	},
 	Debug: Debug{
 		BroadcastTraceDir: "",
@@ -370,6 +372,8 @@ func (c *TopLevel) completeInitialization(configDir string) {
 		case c.General.Throttling.InactivityTimeout == 0:
 			logger.Infof("General.Throttling.InactivityTimeout is unset, setting to %v", Defaults.General.Throttling.InactivityTimeout)
 			c.General.Throttling.InactivityTimeout = Defaults.General.Throttling.InactivityTimeout
+		case c.FileLedger.StateDatabase == "":
+			c.FileLedger.StateDatabase = Defaults.FileLedger.StateDatabase
 		default:
 			return
 		}

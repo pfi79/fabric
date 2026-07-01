@@ -34,6 +34,7 @@ const (
 type DB struct {
 	conf    *Conf
 	db      *leveldb.DB
+	dbName  string
 	dbState dbState
 	mutex   sync.RWMutex
 
@@ -188,6 +189,14 @@ func (dbInst *DB) writeLevelDBBatch(batch *leveldb.Batch, sync bool) error {
 		return errors.Wrap(err, "error writing batch to leveldb")
 	}
 	return nil
+}
+
+// NewUpdateBatch creates a new batch for the DB.
+func (dbInst *DB) NewUpdateBatch() db.Batch {
+	return &UpdateBatch{
+		dbName:       dbInst.dbName,
+		leveldbBatch: &leveldb.Batch{},
+	}
 }
 
 // WriteBatch writes a batch

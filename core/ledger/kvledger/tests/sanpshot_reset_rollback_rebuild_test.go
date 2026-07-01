@@ -9,6 +9,7 @@ package tests
 import (
 	"testing"
 
+	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +44,7 @@ func TestResetRollbackRebuildFailsIfAnyLedgerBootstrappedFromSnapshot(t *testing
 	})
 
 	t.Run("rollback_a_channel_fails", func(t *testing.T) {
-		err := kvledger.RollbackKVLedger(rootFSPath, "ledger_from_genesis_block", 1)
+		err := kvledger.RollbackKVLedger(rootFSPath, "ledger_from_genesis_block", 1, ledger.GoLevelDB)
 		require.EqualError(t, err, "cannot rollback any channel because the peer contains channel(s) [ledger-1] that were bootstrapped from snapshot")
 	})
 

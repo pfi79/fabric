@@ -240,12 +240,6 @@ func TestCreateDBInNonEmptyDir(t *testing.T) {
 	file.Close()
 	db := CreateDB(&Conf{DBPath: path})
 	defer db.Close()
-	defer func() {
-		if r := recover(); r == nil {
-			// Pebble does not panic on non-empty dir, unlike LevelDB.
-			// The test expects no panic for pebble.
-		}
-	}()
 	db.Open()
 	require.NoError(t, os.RemoveAll(path))
 }

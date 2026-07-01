@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
@@ -69,7 +70,7 @@ func constructHashedIndex(storePath string, ledgerIDs []string) error {
 
 // constructHashedIndexFor creates the HashedIndex entries for a given ledger.
 // In this function we also piggyback to upgrade any private data key from format V11 to V12
-func constructHashedIndexFor(ledgerID string, db *leveldbhelper.DBHandle) error {
+func constructHashedIndexFor(ledgerID string, db db.DBHandle) error {
 	startKey, endKey := entireDatakeyRange()
 	itr, err := db.GetIterator(startKey, endKey)
 	if err != nil {
@@ -156,7 +157,7 @@ func constructHashedIndexFor(ledgerID string, db *leveldbhelper.DBHandle) error 
 	return nil
 }
 
-func addHashedIndexEntriesInto(batch *leveldbhelper.UpdateBatch, dataKey *dataKey, dataValue *rwset.CollectionPvtReadWriteSet) error {
+func addHashedIndexEntriesInto(batch db.Batch, dataKey *dataKey, dataValue *rwset.CollectionPvtReadWriteSet) error {
 	collPvtRWSet, err := rwsetutil.CollPvtRwSetFromProtoMsg(dataValue)
 	if err != nil {
 		return err

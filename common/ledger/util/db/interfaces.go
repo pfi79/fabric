@@ -21,6 +21,7 @@ type DB interface {
 	Delete(key []byte, sync bool) error
 	GetIterator(start, end []byte) (Iterator, error)
 	IsEmpty() (bool, error)
+	NewUpdateBatch() Batch
 	WriteBatch(b Batch, sync bool) error
 }
 
@@ -42,6 +43,7 @@ type DBHandle interface {
 	NewUpdateBatch() Batch
 	WriteBatch(b Batch, sync bool) error
 	IsEmpty() (bool, error)
+	Close()
 }
 
 // Batch is an atomic write batch.
@@ -49,6 +51,7 @@ type Batch interface {
 	Put(key, value []byte)
 	Delete(key []byte)
 	Len() int
+	Size() int
 	Reset()
 }
 
@@ -61,4 +64,6 @@ type Iterator interface {
 	Release()
 	Seek(key []byte) bool
 	Prev() bool
+	First() bool
+	Last() bool
 }

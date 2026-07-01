@@ -12,6 +12,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
@@ -34,7 +35,7 @@ func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 	}
 	defer fileLock.Unlock()
 
-	idStore, err := openIDStore(LedgerProviderPath(config.RootFSPath))
+	idStore, err := openIDStore(LedgerProviderPath(config.RootFSPath), config.StateDBConfig.StateDatabase)
 	if err != nil {
 		return errors.WithMessagef(err, "unjoin channel [%s]", ledgerID)
 	}
@@ -43,17 +44,17 @@ func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 	// Set the ledger to a pending deletion status.  If the contents of the ledger are not
 	// fully removed (e.g. a crash during deletion, i/o error, etc.), the deletion may be
 	// resumed at the next peer start.
-	if err := idStore.updateLedgerStatus(ledgerID, msgs.Status_UNDER_DELETION); err != nil {
+	if err = idStore.updateLedgerStatus(ledgerID, msgs.Status_UNDER_DELETION); err != nil {
 		return errors.WithMessagef(err, "unjoin channel [%s]", ledgerID)
 	}
 
 	// remove the ledger data
-	if err := removeLedgerData(config, ledgerID); err != nil {
+	if err = removeLedgerData(config, ledgerID); err != nil {
 		return errors.WithMessagef(err, "deleting ledger [%s]", ledgerID)
 	}
 
 	// Delete the ledger from the ID storage after the contents have been purged.
-	if err := idStore.deleteLedgerID(ledgerID); err != nil {
+	if err = idStore.deleteLedgerID(ledgerID); err != nil {
 		return errors.WithMessagef(err, "deleting ledger [%s]", ledgerID)
 	}
 
@@ -63,6 +64,10 @@ func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 
 // removeLedgerData removes the data for a given ledger. This function should be invoked when the peer is not running and the caller should hold the file lock for the KVLedgerProvider
 func removeLedgerData(config *ledger.Config, ledgerID string) error {
+	blkStoreType := ledger.GoLevelDB
+	if config.StateDBConfig.StateDatabase == ledger.PebbleDB {
+		blkStoreType = ledger.PebbleDB
+	}
 	blkStoreProvider, err := blkstorage.NewProvider(
 		blkstorage.NewConf(
 			BlockStorePath(config.RootFSPath),
@@ -70,7 +75,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		),
 		&blkstorage.IndexConfig{AttrsToIndex: attrsToIndex},
 		&disabled.Provider{},
-		ledger.GoLevelDB,
+		blkStoreType,
 	)
 	if err != nil {
 		return err
@@ -109,8 +114,15 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	}
 	defer pvtdataStoreProvider.Close()
 
+	dbType := db.GoLevelDB
+	if config.HistoryDBConfig.StateDatabase == db.PebbleDB {
+		dbType = db.PebbleDB
+	}
 	historydbProvider, err := history.NewDBProvider(
-		HistoryDBPath(config.RootFSPath),
+		&history.HistoryDBConfig{
+			DBType: dbType,
+			DBPath: HistoryDBPath(config.RootFSPath),
+		},
 	)
 	if err != nil {
 		return err
@@ -120,6 +132,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	configHistoryMgr, err := confighistory.NewMgr(
 		ConfigHistoryDBPath(config.RootFSPath),
 		&noopDeployedChaincodeInfoProvider{},
+		dbType,
 	)
 	if err != nil {
 		return err

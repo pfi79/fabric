@@ -355,20 +355,20 @@ func TestClose(t *testing.T) {
 	db1 := prov.GetDBHandle("db1")
 	db2 := prov.GetDBHandle("db2")
 
-	expectedDBHandles := map[string]db.DBHandle{
-		"db1": db1,
-		"db2": db2,
+	expectedDBHandles := map[string]*DBHandle{
+		"db1": db1.(*DBHandle),
+		"db2": db2.(*DBHandle),
 	}
 	require.Equal(t, expectedDBHandles, prov.dbHandles)
 
 	db1.(*DBHandle).Close()
-	expectedDBHandles = map[string]db.DBHandle{
-		"db2": db2,
+	expectedDBHandles = map[string]*DBHandle{
+		"db2": db2.(*DBHandle),
 	}
 	require.Equal(t, expectedDBHandles, prov.dbHandles)
 
 	db2.(*DBHandle).Close()
-	require.Equal(t, map[string]db.DBHandle{}, prov.dbHandles)
+	require.Equal(t, map[string]*DBHandle{}, prov.dbHandles)
 }
 
 func TestIsEmpty(t *testing.T) {
@@ -435,11 +435,11 @@ func TestIsEmpty(t *testing.T) {
 
 		env.provider.Close()
 		empty, err := db1.IsEmpty()
-		require.EqualError(t, err, "internal leveldb error while obtaining db iterator: leveldb: closed")
+		require.EqualError(t, err, "internal leveldb error while obtaining next entry from iterator: leveldb: closed")
 		require.False(t, empty)
 
 		empty, err = db2.IsEmpty()
-		require.EqualError(t, err, "internal leveldb error while obtaining db iterator: leveldb: closed")
+		require.EqualError(t, err, "internal leveldb error while obtaining next entry from iterator: leveldb: closed")
 		require.False(t, empty)
 	})
 }

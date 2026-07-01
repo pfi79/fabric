@@ -9,7 +9,7 @@ package pvtstatepurgemgmt
 import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"google.golang.org/protobuf/proto"
 )
@@ -21,7 +21,7 @@ const (
 )
 
 type expiryKeeper struct {
-	db *leveldbhelper.DBHandle
+	db db.DBHandle
 }
 
 // expiryInfo encapsulates an 'expiryInfoKey' and corresponding private data keys.

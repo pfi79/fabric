@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/privacyenabledstate"
@@ -64,7 +65,12 @@ func newTestHistoryEnv(t *testing.T) *levelDBLockBasedHistoryEnv {
 	txMgr, err := txmgr.NewLockBasedTxMgr(txmgrInitializer)
 
 	require.NoError(t, err)
-	testHistoryDBProvider, err := NewDBProvider(testHistoryDBPath)
+	testHistoryDBProvider, err := NewDBProvider(
+		&HistoryDBConfig{
+			DBType: db.GoLevelDB,
+			DBPath: testHistoryDBPath,
+		},
+	)
 	require.NoError(t, err)
 	testHistoryDB := testHistoryDBProvider.GetDBHandle("TestHistoryDB")
 
@@ -89,7 +95,7 @@ func (env *levelDBLockBasedHistoryEnv) cleanup() {
 	env.testHistoryDBProvider.Close()
 }
 
-/////// testBlockStoreEnv//////
+// ///// testBlockStoreEnv//////
 
 type testBlockStoreEnv struct {
 	t               testing.TB

@@ -75,6 +75,7 @@ func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
 		return nil, err
 	}
 
+	db.dbName = internalDBName
 	internalDB := &DBHandle{
 		db:     db,
 		dbName: internalDBName,
@@ -113,6 +114,7 @@ func openDBAndCheckFormat(conf *Conf) (d *DB, e error) {
 		}
 	}()
 
+	db.dbName = internalDBName
 	internalDB := &DBHandle{
 		db:     db,
 		dbName: internalDBName,
@@ -222,8 +224,10 @@ func (h *DBHandle) Delete(key []byte, sync bool) error {
 func (h *DBHandle) deleteAll() error {
 	sKey := constructLevelKey(h.dbName, nil)
 	eKey := constructLevelKey(h.dbName, nil)
-	// replace the last byte 'dbNameKeySep' by 'lastKeyIndicator'
-	eKey[len(eKey)-1] = lastKeyIndicator
+	if h.dbName != "" {
+		// replace the last byte 'dbNameKeySep' by 'lastKeyIndicator'
+		eKey[len(eKey)-1] = lastKeyIndicator
+	}
 	dbIter := h.db.getRawIterator(sKey, eKey)
 	if err := dbIter.Error(); err != nil {
 		dbIter.Release()
@@ -264,8 +268,10 @@ func (h *DBHandle) deleteAll() error {
 func (h *DBHandle) IsEmpty() (bool, error) {
 	sKey := constructLevelKey(h.dbName, nil)
 	eKey := constructLevelKey(h.dbName, nil)
-	// replace the last byte 'dbNameKeySep' by 'lastKeyIndicator'
-	eKey[len(eKey)-1] = lastKeyIndicator
+	if h.dbName != "" {
+		// replace the last byte 'dbNameKeySep' by 'lastKeyIndicator'
+		eKey[len(eKey)-1] = lastKeyIndicator
+	}
 	itr := h.db.getRawIterator(sKey, eKey)
 	if err := itr.Error(); err != nil {
 		itr.Release()
@@ -302,7 +308,7 @@ func (h *DBHandle) WriteBatch(batch db.Batch, sync bool) error {
 func (h *DBHandle) GetIterator(startKey []byte, endKey []byte) (db.Iterator, error) {
 	sKey := constructLevelKey(h.dbName, startKey)
 	eKey := constructLevelKey(h.dbName, endKey)
-	if endKey == nil {
+	if endKey == nil && h.dbName != "" {
 		// replace the last byte 'dbNameKeySep' by 'lastKeyIndicator'
 		eKey[len(eKey)-1] = lastKeyIndicator
 	}
@@ -394,6 +400,14 @@ func (itr *Iterator) Seek(key []byte) bool {
 }
 
 func constructLevelKey(dbName string, key []byte) []byte {
+	if len(dbName) == 0 {
+		if key == nil {
+			return nil
+		}
+		k := make([]byte, len(key))
+		copy(k, key)
+		return k
+	}
 	return append(append([]byte(dbName), dbNameKeySep...), key...)
 }
 

@@ -31,8 +31,13 @@ func createLedgerFactory(conf *config.TopLevel, metricsProvider metrics.Provider
 		logger.Panic("Orderer.FileLedger.Location must be set")
 	}
 
+	dbtype := ledger.GoLevelDB
+	if conf.FileLedger.StateDatabase == ledger.PebbleDB {
+		dbtype = ledger.PebbleDB
+	}
+
 	logger.Debug("Ledger dir:", ld)
-	lf, err := fileledger.New(ld, ledger.GoLevelDB, metricsProvider)
+	lf, err := fileledger.New(ld, dbtype, metricsProvider)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Error in opening ledger factory")
 	}

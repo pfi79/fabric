@@ -238,7 +238,7 @@ func (provider *VersionedDBProvider) Drop(dbName string) error {
 
 	delete(provider.databases, dbName)
 
-	return provider.redoLoggerProvider.leveldbProvider.Drop(dbName)
+	return provider.redoLoggerProvider.dbProvider.Drop(dbName)
 }
 
 // HealthCheck checks to see if the couch instance of the peer is healthy

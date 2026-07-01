@@ -51,6 +51,7 @@ func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
 		return nil, err
 	}
 
+	db.dbName = internalDBName
 	internalDB := &PebbleDBHandle{
 		db:     db,
 		dbName: internalDBName,
@@ -99,6 +100,7 @@ func openDBAndCheckFormat(conf *Conf) (d *PebbleDB, e error) {
 		}
 	}()
 
+	db.dbName = internalDBName
 	internalDB := &PebbleDBHandle{
 		db:     db,
 		dbName: internalDBName,
@@ -214,9 +216,12 @@ func (h *PebbleDBHandle) deleteAll() error {
 	if !h.isDBOpen() {
 		return errors.Errorf("pebble db at path [%s] is closed", h.db.conf.DBPath)
 	}
+
 	sKey := constructLevelKey(h.dbName, nil)
 	eKey := constructLevelKey(h.dbName, nil)
-	eKey[len(eKey)-1] = lastKeyIndicator
+	if h.dbName != "" {
+		eKey[len(eKey)-1] = lastKeyIndicator
+	}
 
 	db := h.db.db
 	iter, err := db.NewIter(&pebble.IterOptions{
@@ -259,9 +264,12 @@ func (h *PebbleDBHandle) IsEmpty() (bool, error) {
 	if !h.isDBOpen() {
 		return false, errors.Errorf("pebble db at path [%s] is closed", h.db.conf.DBPath)
 	}
+
 	sKey := constructLevelKey(h.dbName, nil)
 	eKey := constructLevelKey(h.dbName, nil)
-	eKey[len(eKey)-1] = lastKeyIndicator
+	if h.dbName != "" {
+		eKey[len(eKey)-1] = lastKeyIndicator
+	}
 
 	db := h.db.db
 	iter, err := db.NewIter(&pebble.IterOptions{
@@ -304,9 +312,10 @@ func (h *PebbleDBHandle) GetIterator(startKey []byte, endKey []byte) (db.Iterato
 	if !h.isDBOpen() {
 		return nil, errors.Errorf("pebble db at path [%s] is closed", h.db.conf.DBPath)
 	}
+
 	sKey := constructLevelKey(h.dbName, startKey)
 	eKey := constructLevelKey(h.dbName, endKey)
-	if endKey == nil {
+	if endKey == nil && h.dbName != "" {
 		eKey[len(eKey)-1] = lastKeyIndicator
 	}
 	logger.Debugf("Getting iterator for range [%#v] - [%#v]", sKey, eKey)
@@ -328,6 +337,14 @@ func (h *PebbleDBHandle) Close() {
 }
 
 func constructLevelKey(dbName string, key []byte) []byte {
+	if len(dbName) == 0 {
+		if key == nil {
+			return nil
+		}
+		k := make([]byte, len(key))
+		copy(k, key)
+		return k
+	}
 	return append(append([]byte(dbName), dbNameKeySep...), key...)
 }
 

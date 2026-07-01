@@ -292,63 +292,296 @@ func New(directory string, dbType string, metricsProvider metrics.Provider) (blo
 }
 ```
 
-### Этап 9: Переход потребителей на интерфейсы
+### Этап 9: Переход потребителей на интерфейсы [Done]
 
 Все пакеты, которые сейчас импортируют конкретные типы `leveldbhelper`, меняют
 их на интерфейсы из `db/`:
 
-#### 9.1 blkstorage
+#### 9.1 blkstorage [Done]
 
 `blockstore_provider.go`, `blockindex.go`, `blockfile_mgr.go`, `rollback.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.2 pvtdatastorage
+#### 9.2 pvtdatastorage [Done]
 
 `store.go`, `snapshot_data_importer.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.3 history
+#### 9.3 history [Done]
 
 `db.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.4 bookkeeping
+#### 9.4 bookkeeping [Done]
 
 `provider.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.5 confighistory
+#### 9.5 confighistory [Done]
 
 `db_helper.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.6 transientstore
+#### 9.6 transientstore [Done]
 
 `store.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.7 statecouchdb
+#### 9.7 statecouchdb [Done]
 
 `redolog.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.8 stateleveldb
+#### 9.8 stateleveldb [Done]
 
 `stateleveldb.go`:
 `*leveldbhelper.Provider` → `db.Provider`
 
-#### 9.9 kvledger
+#### 9.9 kvledger [Done]
 
 `kv_ledger_provider.go`:
 - idStore: `*leveldbhelper.DB` → `db.DB`
 - FileLock: отдельно через `NewFileLock()`
 - upgradeFormat: `leveldb.Batch` → `db.Batch`
 
-**Важно:** Большинство потребителей всегда используют GoLevelDB (меняется только
-state DB и history DB). Рефакторинг на интерфейсы — подготовка для будущего расширения + 
-единообразие с `statepebbledb` и `blkstorage`.
+---
 
-### Этап 10: Утилита миграции — `cmd/dbmigrator`
+### Этап 10: Переход оставшихся хранилищ на конфигурируемый тип БД
+
+Все потребители ниже уже переведены на интерфейсы `db.*` (Этап 9), но **всегда
+создают GoLevelDB**. Изменения: добавить параметр `dbType` в конструктор /
+конфиг и переключаться между `leveldbhelper.NewProvider` и
+`pebblehelper.NewProvider`.
+
+#### 10.1 bookkeeping [In progress]
+
+**`core/ledger/kvledger/bookkeeping/provider.go`:**
+
+```go
+// Было:
+func NewProvider(path string) *Provider
+
+// Стало:
+func NewProvider(path, dbType string) (*Provider, error)
+```
+
+- `NewProvider` принимает `dbType`; коммутатор по типу БД.
+- **Вызывающая сторона:** `kv_ledger_provider.go:initStateDBProvider()` —
+  передавать `dbType` из конфига.
+
+#### 10.2 transientstore [In progress]
+
+**`core/transientstore/store.go`:**
+
+```go
+// Было:
+func NewStoreProvider(path string) (*StoreProvider, error)
+
+// Стало:
+func NewStoreProvider(path, dbType string) (*StoreProvider, error)
+```
+
+- `newStoreProvider` — коммутатор по `dbType`.
+- `storeProvider.fileLock` → `*leveldbhelper.FileLock` заменить на интерфейс
+  (или принимать `dbType` и выбирать `leveldbhelper.NewFileLock`
+  / `pebblehelper.NewFileLock`).
+- **Вызывающая сторона:** `kv_ledger_provider.go` — передавать `dbType` из конфига.
+
+#### 10.3 pvtdatastorage [In progress]
+
+**Конфиг (`core/ledger/pvtdatastorage/store.go`):**
+
+```go
+type PrivateDataConfig struct {
+    PrivateDataConfig *ledger.PrivateDataConfig
+    StorePath         string
+    DBType            string   // новое поле
+}
+```
+
+- `NewProvider(conf *PrivateDataConfig)` — коммутатор по `conf.DBType`.
+- **Зависимые файлы:**
+  - `snapshot_data_importer.go:newSnapshotRowsSorter()` (строка 402) —
+    создаёт временную LevelDB для сортировки. Можно заменить на
+    `pebblehelper` или оставить как есть (временная БД, удаляется после
+    импорта). **Рекомендация:** оставить LevelDB — временная БД не влияет
+    на производительность.
+  - `retroactive_hashed_index.go:constructHashedIndex()` (строка 50) —
+    утилита однократного апгрейда формата данных. Работает на
+    остановленном узле до переключения на PebbleDB. **Изменений не
+    требует.**
+- **Вызывающая сторона:** `kv_ledger_provider.go:initPvtDataStoreProvider()`
+  — заполнять `DBType` из конфига.
+
+#### 10.4 statecouchdb/redolog [In progress]
+
+**`core/ledger/kvledger/txmgmt/statedb/statecouchdb/redolog.go`:**
+
+```go
+// Было:
+func newRedoLoggerProvider(dirPath string) (*redoLoggerProvider, error)
+
+// Стало:
+func newRedoLoggerProvider(dirPath, dbType string) (*redoLoggerProvider, error)
+```
+
+- Коммутатор по `dbType` в `newRedoLoggerProvider`.
+
+#### 10.5 kv_ledger_provider — FileLock [In progress]
+
+**`core/ledger/kvledger/kv_ledger_provider.go`:**
+
+Сейчас FileLock создаётся через `leveldbhelper.NewFileLock()` — конкретный тип
+`*leveldbhelper.FileLock` в структуре `Provider` (строка 70) и в вызовах
+(строки 94-95).
+
+**Изменения:**
+
+```go
+// Определить интерфейс:
+type FileLock interface {
+    Lock() error
+    Unlock() error
+}
+
+// Provider.fileLock: *leveldbhelper.FileLock → FileLock
+
+// Конструктор FileLock по типу БД:
+func newFileLock(path, dbType string) (FileLock, error) {
+    switch dbType {
+    case "pebbledb":
+        return pebblehelper.NewFileLock(filePath)
+    default:
+        return leveldbhelper.NewFileLock(filePath)
+    }
+}
+```
+
+- `leveldbhelper.NewFileLock(path)` остаётся без изменений.
+- `pebblehelper.NewFileLock(path)` — новая имплементация через
+  `syscall.Flock` на пустой файл (как в `pebblehelper/file_lock.go`).
+
+#### 10.6 Вспомогательные утилиты (upgrade/reset/rebuild/rollback)
+
+**Файлы в `core/ledger/kvledger/`:**
+
+| Файл | Использование | Изменение |
+|------|--------------|-----------|
+| `upgrade_dbs.go` | `leveldbhelper.CreateDB` | Принимать `dbType`, коммутатор |
+| `reset.go` | `leveldbhelper.CreateDB` | Принимать `dbType`, коммутатор |
+| `rebuild_dbs.go` | `leveldbhelper.CreateDB` | Принимать `dbType`, коммутатор |
+| `pause_resume.go` | `leveldbhelper` | Принимать `dbType`, коммутатор |
+| `rollback.go` | `leveldbhelper` | Принимать `dbType`, коммутатор |
+| `unjoin_channel.go` | `leveldbhelper` | Принимать `dbType`, коммутатор |
+| `common/ledger/blkstorage/rollback.go` | `leveldbhelper.NewProvider` (строка 75) | Принимать `dbType`, коммутатор |
+
+Для всех: заменить прямые вызовы `leveldbhelper.CreateDB` на фабричный
+метод, принимающий `dbType`. Предлагается создать:
+
+```go
+// common/ledger/util/db/factory.go
+func CreateDB(conf *Conf, dbType string) (DB, error) {
+    switch dbType {
+    case PebbleDB:
+        return pebblehelper.CreateDB(conf)
+    default:
+        return leveldbhelper.CreateDB(conf)
+    }
+}
+
+func NewProvider(conf *Conf, dbType string) (Provider, error) {
+    switch dbType {
+    case PebbleDB:
+        return pebblehelper.NewProvider(conf)
+    default:
+        return leveldbhelper.NewProvider(conf)
+    }
+}
+```
+
+Тогда все потребители вызывают единую фабрику `db.CreateDB(conf, dbType)`
+вместо ручного свитчинга.
+
+#### 10.7 Конфигурация: peer
+
+**`core/ledger/kvledger/kv_ledger_provider.go` — `Provider`:**
+
+Добавить поле `dbType string`, заполняемое из конфига. Все
+`init*Provider()` методы получают `dbType` и передают его соответствующим
+конструкторам.
+
+**`core/ledger/kvledger/kv_ledger_provider.go` — изменения в init-методах:**
+
+```go
+func (p *Provider) initStateDBProvider() {
+    dbType := p.dbType  // из конфига
+    stateDBProvider, err = bookkeeping.NewProvider(path, dbType)
+    ...
+    vdbProvider, err := privacyenabledstate.NewDBProvider(...)
+    // privacyenabledstate.DBProvider сам переключает stateleveldb
+    // на основе переданного dbType
+}
+
+func (p *Provider) initPvtDataStoreProvider() {
+    conf := &pvtdatastorage.PrivateDataConfig{
+        StorePath: p.privateDataConfig.StorePath,
+        DBType:    p.dbType,
+    }
+    pvtDataStoreProvider, err = pvtdatastorage.NewProvider(conf)
+}
+
+func (p *Provider) initTransientStoreProvider() {
+    p.transientStoreProvider, err = transientstore.NewStoreProvider(path, p.dbType)
+}
+```
+
+Для History, ConfigHistory и BlockStore — уже сделано (передают `dbType`
+из конфига).
+
+#### 10.8 Обновление конфигурации
+
+**`sampleconfig/core.yaml`:**
+```yaml
+ledger:
+  state:
+    stateDatabase: goleveldb   # уже есть
+  history:
+    stateDatabase: goleveldb   # уже есть
+  # Новые поля — единый тип БД для всех вспомогательных хранилищ:
+  internalDatabases:
+    stateDatabase: goleveldb   # bookkeeper, pvtdata, transient, redo-log
+```
+
+Либо упрощённый подход — один параметр `stateDatabase` для всех хранилищ
+(кроме блок-индекса orderer, который конфигурируется отдельно).
+
+**Рекомендация:** добавить единую опцию:
+
+```yaml
+ledger:
+  stateDatabase: goleveldb   # общий тип для ВСЕХ LevelDB-хранилищ
+  state:
+    stateDatabase: goleveldb   # только state DB (если нужен отдельный)
+```
+
+Тогда пользователь конфигурирует один раз, а history/state могут
+переопределяться.
+
+#### 10.9 Обновлённая конфигурация orderer
+
+**`sampleconfig/orderer.yaml`:**
+```yaml
+FileLedger:
+  Location: /var/hyperledger/production/orderer
+  stateDatabase: goleveldb   # уже есть (для blkstorage index)
+```
+
+Дополнительных полей не требуется — orderer использует LevelDB только
+для индекса блоков, и оно уже конфигурируется.
+
+---
+
+### Этап 12: Утилита миграции — `cmd/dbmigrator`
 
 **Отдельная standalone-программа**, собирается как `build/bin/dbmigrator`.
 
@@ -418,9 +651,9 @@ chains/<channelId>/index
 
 ---
 
-### Этап 11: Интеграционные тесты
+### Этап 13: Интеграционные тесты
 
-**11.1 Тест миграции хранилищ (Ginkgo + Gomega)**
+**13.1 Тест миграции хранилищ (Ginkgo + Gomega)**
 
 - Набор тестов `core/ledger/kvledger/txmgmt/statedb/statepebbledb/integration/`
 - Поднимает тестовую сеть через `nwo`
@@ -434,7 +667,7 @@ chains/<channelId>/index
   история, приватные данные
 - Аналогичный тест для orderer (fileledger index migration)
 
-**11.2 Бенчмарк производительности хранилищ**
+**13.2 Бенчмарк производительности хранилищ**
 
 - Тест `core/ledger/kvledger/txmgmt/statedb/statepebbledb/benchmark_test.go`
 - Сравнение GoLevelDB vs PebbleDB на одинаковых сценариях:
@@ -516,16 +749,23 @@ Makefile                                       [ИЗМЕНЁН]
 |-----------|-------------|------------------|
 | Интерфейсы | 1 | 0 |
 | LevelDB helper | 0 | 2 |
-| PebbleDB helper | 5 | 0 |
+| PebbleDB helper | 6 | 0 |
 | StatePebbleDB | 3 | 0 |
 | Blkstorage | 0 | 4 |
 | FileLedger | 0 | 1 |
 | Потребители (8 пакетов) | 0 | ~10 |
+| Фабрика `db/factory.go` | 1 | 0 |
+| bookkeeping | 0 | 1 |
+| transientstore | 0 | 1 |
+| pvtdatastorage | 0 | 3 |
+| statecouchdb/redolog | 0 | 1 |
+| kvledger (filelock) | 0 | 1 |
+| Вспомогательные утилиты | 0 | ~6 |
 | Orderer config | 0 | 1 |
 | Утилита миграции | 2 | 0 |
 | Конфиг | 0 | 2 |
 | Makefile | 0 | 1 |
-| **Всего** | **~11** | **~21** |
+| **Всего** | **~13** | **~34** |
 
 ---
 

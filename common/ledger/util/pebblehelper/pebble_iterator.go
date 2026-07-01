@@ -53,6 +53,18 @@ func (itr *PebbleIterator) Release() {
 	itr.iter.Close()
 }
 
+// First moves the iterator to the first key/value pair.
+func (itr *PebbleIterator) First() bool {
+	itr.started = true
+	return itr.iter.First()
+}
+
+// Last moves the iterator to the last key/value pair.
+func (itr *PebbleIterator) Last() bool {
+	itr.started = true
+	return itr.iter.Last()
+}
+
 // Seek moves the iterator to the first key/value pair whose key is greater than or equal to the given key.
 // It returns whether such a pair exists.
 func (itr *PebbleIterator) Seek(key []byte) bool {

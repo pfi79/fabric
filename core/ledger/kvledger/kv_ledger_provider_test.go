@@ -145,10 +145,10 @@ func TestGetLedger(t *testing.T) {
 	// close provider to trigger db error
 	provider.Close()
 	_, err = provider.idStore.getActiveLedgerIDs()
-	require.EqualError(t, err, "error getting ledger ids from idStore: leveldb: closed")
+	require.EqualError(t, err, "leveldb: closed")
 
 	_, err = provider.idStore.getActiveAndInactiveLedgerIDs()
-	require.EqualError(t, err, "error getting ledger ids from idStore: leveldb: closed")
+	require.EqualError(t, err, "leveldb: closed")
 }
 
 func TestLedgerMetataDataUnmarshalError(t *testing.T) {

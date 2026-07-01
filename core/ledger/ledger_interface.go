@@ -127,6 +127,9 @@ type PrivateDataConfig struct {
 // HistoryDBConfig is a structure used to configure the transaction history database.
 type HistoryDBConfig struct {
 	Enabled bool
+	// StateDatabase is the database to use for storing last known state.  The
+	// supported options are "goleveldb", "pebbledb" (captured in the constants GoLevelDB, PebbleDB).
+	StateDatabase string
 }
 
 // SnapshotsConfig is a structure used to configure snapshot function

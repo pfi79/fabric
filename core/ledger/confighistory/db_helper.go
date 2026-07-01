@@ -11,7 +11,9 @@ import (
 	"encoding/binary"
 	"math"
 
+	dbpkg "github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/pkg/errors"
 )
 
@@ -32,20 +34,27 @@ type compositeKV struct {
 }
 
 type dbProvider struct {
-	*leveldbhelper.Provider
+	dbpkg.Provider
 }
 
 type db struct {
-	*leveldbhelper.DBHandle
+	dbpkg.DBHandle
 }
 
 type batch struct {
-	*leveldbhelper.UpdateBatch
+	dbpkg.Batch
 }
 
-func newDBProvider(dbPath string) (*dbProvider, error) {
-	logger.Debugf("Opening db for config history: db path = %s", dbPath)
-	p, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dbPath})
+func newDBProvider(dbPath, dbType string) (*dbProvider, error) {
+	logger.Debugf("Opening db for config history: db path = %s, db type = %s", dbPath, dbType)
+	var p dbpkg.Provider
+	var err error
+	switch dbType {
+	case dbpkg.PebbleDB:
+		p, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: dbPath})
+	default:
+		p, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dbPath})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +76,7 @@ func (b *batch) add(ns, key string, blockNum uint64, value []byte) {
 }
 
 func (d *db) writeBatch(batch *batch, sync bool) error {
-	return d.WriteBatch(batch.UpdateBatch, sync)
+	return d.WriteBatch(batch.Batch, sync)
 }
 
 func (d *db) mostRecentEntryBelow(blockNum uint64, ns, key string) (*compositeKV, error) {
@@ -106,7 +115,7 @@ func (d *db) entryAt(blockNum uint64, ns, key string) (*compositeKV, error) {
 	return &compositeKV{k, v}, nil
 }
 
-func (d *db) getNamespaceIterator(ns string) (*leveldbhelper.Iterator, error) {
+func (d *db) getNamespaceIterator(ns string) (dbpkg.Iterator, error) {
 	nsStartKey := []byte(keyPrefix + ns)
 	nsStartKey = append(nsStartKey, separatorByte)
 	nsEndKey := []byte(keyPrefix + ns)

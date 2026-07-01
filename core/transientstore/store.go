@@ -13,11 +13,11 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/transientstore"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -68,20 +68,20 @@ type EndorserPvtSimulationResults struct {
 // private write sets of simulated transactions, and implements TransientStoreProvider
 // interface.
 type storeProvider struct {
-	dbProvider *leveldbhelper.Provider
+	dbProvider db.Provider
 	fileLock   *leveldbhelper.FileLock
 }
 
 // store holds an instance of a levelDB.
 type Store struct {
-	db       *leveldbhelper.DBHandle
+	db       db.DBHandle
 	ledgerID string
 }
 
 // RwsetScanner helps iterating over results
 type RwsetScanner struct {
 	txid   string
-	dbItr  iterator.Iterator
+	dbItr  db.Iterator
 	filter ledger.PvtNsCollFilter
 }
 

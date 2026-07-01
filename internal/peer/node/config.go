@@ -66,7 +66,8 @@ func ledgerConfig() *ledger.Config {
 			PurgedKeyAuditLogging:               purgedKeyAuditLogging,
 		},
 		HistoryDBConfig: &ledger.HistoryDBConfig{
-			Enabled: viper.GetBool("ledger.history.enableHistoryDatabase"),
+			Enabled:       viper.GetBool("ledger.history.enableHistoryDatabase"),
+			StateDatabase: viper.GetString("ledger.history.stateDatabase"),
 		},
 		SnapshotsConfig: &ledger.SnapshotsConfig{
 			RootDir: snapshotsRootDir,

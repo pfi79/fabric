@@ -30,6 +30,7 @@ const (
 type PebbleDB struct {
 	conf    *Conf
 	db      *pebble.DB
+	dbName  string
 	dbState dbState
 	mutex   sync.RWMutex
 }
@@ -171,6 +172,14 @@ func (dbInst *PebbleDB) GetIterator(startKey []byte, endKey []byte) (db.Iterator
 		return nil, err
 	}
 	return &PebbleIterator{iter: iter}, nil
+}
+
+// NewUpdateBatch creates a new batch for the DB.
+func (dbInst *PebbleDB) NewUpdateBatch() db.Batch {
+	return &PebbleBatch{
+		dbName: dbInst.dbName,
+		batch:  dbInst.db.NewBatch(),
+	}
 }
 
 // WriteBatch writes a batch.

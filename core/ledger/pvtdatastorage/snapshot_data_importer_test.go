@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/chaincode/implicitcollection"
 	"github.com/hyperledger/fabric/core/ledger/confighistory/confighistorytest"
@@ -796,7 +797,7 @@ func (e eligibilityVal) sameAs(p *peer.CollectionPolicyConfig) bool {
 }
 
 func TestDBUpdates(t *testing.T) {
-	setup := func() *leveldbhelper.Provider {
+	setup := func() db.Provider {
 		testDir := t.TempDir()
 
 		p, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: testDir})
@@ -916,7 +917,7 @@ func TestDBUpdates(t *testing.T) {
 
 type dbEntriesVerifier struct {
 	t  *testing.T
-	db *leveldbhelper.DBHandle
+	db db.DBHandle
 }
 
 func (v *dbEntriesVerifier) verifyElgMissingDataEntry(key *missingDataKey, expectedVal *bitset.BitSet) {

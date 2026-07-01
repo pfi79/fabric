@@ -360,7 +360,7 @@ func newFullDBScanner(db db.DBHandle, skipNamespace func(namespace string) bool)
 
 // Next returns the key-values in the lexical order of <Namespace, key>
 func (s *fullDBScanner) Next() (*statedb.VersionedKV, error) {
-	for s.dbItr.Next() {
+	if s.dbItr.Next() {
 		ns, key := decodeDataKey(s.dbItr.Key())
 		for s.toSkip(ns) {
 			if !s.dbItr.Seek(dataKeyStarterForNextNamespace(ns)) {

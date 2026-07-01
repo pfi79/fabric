@@ -8,6 +8,7 @@ package confighistorytest
 
 import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/mock"
@@ -19,8 +20,12 @@ type Mgr struct {
 }
 
 func NewMgr(dbPath string) (*Mgr, error) {
+	return NewMgrWithDBType(dbPath, db.GoLevelDB)
+}
+
+func NewMgrWithDBType(dbPath, dbType string) (*Mgr, error) {
 	mockCCInfoProvider := &mock.DeployedChaincodeInfoProvider{}
-	configHistory, err := confighistory.NewMgr(dbPath, mockCCInfoProvider)
+	configHistory, err := confighistory.NewMgr(dbPath, mockCCInfoProvider, dbType)
 	if err != nil {
 		return nil, err
 	}

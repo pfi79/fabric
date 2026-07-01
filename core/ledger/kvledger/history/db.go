@@ -11,7 +11,9 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
@@ -20,59 +22,84 @@ import (
 	"github.com/pkg/errors"
 )
 
+// HistoryDBConfig encapsulates the configuration for the history database.
+type HistoryDBConfig struct {
+	// DBType is the database to use for storing last known state.  The
+	// supported options are "goleveldb", "pebbledb" (captured in the constants GoLevelDB, PebbleDB).
+	DBType string
+	// DBPath is the filesystem path for the history database.
+	// It is internally computed by the ledger component,
+	// so it is not in ledger.HistoryDBConfig and not exposed to other components.
+	DBPath string
+}
+
 var logger = flogging.MustGetLogger("history")
 
 // DBProvider provides handle to HistoryDB for a given channel
 type DBProvider struct {
-	leveldbProvider *leveldbhelper.Provider
+	dbProvider db.Provider
 }
 
 // NewDBProvider instantiates DBProvider
-func NewDBProvider(path string) (*DBProvider, error) {
-	logger.Debugf("constructing HistoryDBProvider dbPath=%s", path)
-	levelDBProvider, err := leveldbhelper.NewProvider(
-		&leveldbhelper.Conf{
-			DBPath:         path,
-			ExpectedFormat: dataformat.CurrentFormat,
-		},
+func NewDBProvider(conf *HistoryDBConfig) (*DBProvider, error) {
+	logger.Debugf("constructing HistoryDBProvider dbPath=%s", conf.DBPath)
+	var (
+		dbp db.Provider
+		err error
 	)
+
+	if conf.DBType == ledger.PebbleDB {
+		dbp, err = pebblehelper.NewProvider(
+			&pebblehelper.Conf{
+				DBPath:         conf.DBPath,
+				ExpectedFormat: dataformat.CurrentFormat,
+			},
+		)
+	} else {
+		dbp, err = leveldbhelper.NewProvider(
+			&leveldbhelper.Conf{
+				DBPath:         conf.DBPath,
+				ExpectedFormat: dataformat.CurrentFormat,
+			},
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
 	return &DBProvider{
-		leveldbProvider: levelDBProvider,
+		dbProvider: dbp,
 	}, nil
 }
 
 // MarkStartingSavepoint creates historydb to be used for a ledger that is created from a snapshot
 func (p *DBProvider) MarkStartingSavepoint(name string, savepoint *version.Height) error {
 	db := p.GetDBHandle(name)
-	err := db.levelDB.Put(savePointKey, savepoint.ToBytes(), true)
+	err := db.dbHandle.Put(savePointKey, savepoint.ToBytes(), true)
 	return errors.WithMessagef(err, "error while writing the starting save point for ledger [%s]", name)
 }
 
 // GetDBHandle gets the handle to a named database
 func (p *DBProvider) GetDBHandle(name string) *DB {
 	return &DB{
-		levelDB: p.leveldbProvider.GetDBHandle(name),
-		name:    name,
+		dbHandle: p.dbProvider.GetDBHandle(name),
+		name:     name,
 	}
 }
 
 // Close closes the underlying db
 func (p *DBProvider) Close() {
-	p.leveldbProvider.Close()
+	p.dbProvider.Close()
 }
 
 // Drop drops channel-specific data from the history db
 func (p *DBProvider) Drop(channelName string) error {
-	return p.leveldbProvider.Drop(channelName)
+	return p.dbProvider.Drop(channelName)
 }
 
 // DB maintains and provides access to history data for a particular channel
 type DB struct {
-	levelDB *leveldbhelper.DBHandle
-	name    string
+	dbHandle db.DBHandle
+	name     string
 }
 
 // Commit implements method in HistoryDB interface
@@ -81,7 +108,7 @@ func (d *DB) Commit(block *common.Block) error {
 	// Set the starting tranNo to 0
 	var tranNo uint64
 
-	dbBatch := d.levelDB.NewUpdateBatch()
+	dbBatch := d.dbHandle.NewUpdateBatch()
 
 	logger.Debugf("Channel [%s]: Updating history database for blockNo [%v] with [%d] transactions",
 		d.name, blockNo, len(block.Data.Data))
@@ -148,7 +175,7 @@ func (d *DB) Commit(block *common.Block) error {
 
 	// write the block's history records and savepoint to LevelDB
 	// Setting snyc to true as a precaution, false may be an ok optimization after further testing.
-	if err := d.levelDB.WriteBatch(dbBatch, true); err != nil {
+	if err := d.dbHandle.WriteBatch(dbBatch, true); err != nil {
 		return err
 	}
 
@@ -158,12 +185,12 @@ func (d *DB) Commit(block *common.Block) error {
 
 // NewQueryExecutor implements method in HistoryDB interface
 func (d *DB) NewQueryExecutor(blockStore *blkstorage.BlockStore) (ledger.HistoryQueryExecutor, error) {
-	return &QueryExecutor{d.levelDB, blockStore}, nil
+	return &QueryExecutor{d.dbHandle, blockStore}, nil
 }
 
 // GetLastSavepoint implements returns the height till which the history is present in the db
 func (d *DB) GetLastSavepoint() (*version.Height, error) {
-	versionBytes, err := d.levelDB.Get(savePointKey)
+	versionBytes, err := d.dbHandle.Get(savePointKey)
 	if err != nil || versionBytes == nil {
 		return nil, err
 	}

@@ -13,8 +13,8 @@ import (
 )
 
 // PauseChannel updates the channel status to inactive in ledgerProviders.
-func PauseChannel(rootFSPath, ledgerID string) error {
-	if err := pauseOrResumeChannel(rootFSPath, ledgerID, msgs.Status_INACTIVE); err != nil {
+func PauseChannel(rootFSPath, stateDBType, ledgerID string) error {
+	if err := pauseOrResumeChannel(rootFSPath, stateDBType, ledgerID, msgs.Status_INACTIVE); err != nil {
 		return err
 	}
 	logger.Infof("The channel [%s] has been successfully paused", ledgerID)
@@ -22,15 +22,15 @@ func PauseChannel(rootFSPath, ledgerID string) error {
 }
 
 // ResumeChannel updates the channel status to active in ledgerProviders
-func ResumeChannel(rootFSPath, ledgerID string) error {
-	if err := pauseOrResumeChannel(rootFSPath, ledgerID, msgs.Status_ACTIVE); err != nil {
+func ResumeChannel(rootFSPath, stateDBType, ledgerID string) error {
+	if err := pauseOrResumeChannel(rootFSPath, stateDBType, ledgerID, msgs.Status_ACTIVE); err != nil {
 		return err
 	}
 	logger.Infof("The channel [%s] has been successfully resumed", ledgerID)
 	return nil
 }
 
-func pauseOrResumeChannel(rootFSPath, ledgerID string, status msgs.Status) error {
+func pauseOrResumeChannel(rootFSPath, stateDBType, ledgerID string, status msgs.Status) error {
 	fileLock := leveldbhelper.NewFileLock(fileLockPath(rootFSPath))
 	if err := fileLock.Lock(); err != nil {
 		return errors.Wrap(err, "as another peer node command is executing,"+
@@ -38,7 +38,7 @@ func pauseOrResumeChannel(rootFSPath, ledgerID string, status msgs.Status) error
 	}
 	defer fileLock.Unlock()
 
-	idStore, err := openIDStore(LedgerProviderPath(rootFSPath))
+	idStore, err := openIDStore(LedgerProviderPath(rootFSPath), stateDBType)
 	if err != nil {
 		return err
 	}

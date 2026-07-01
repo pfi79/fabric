@@ -31,7 +31,7 @@ var (
 
 // VersionedDBProvider implements interface VersionedDBProvider
 type VersionedDBProvider struct {
-	dbProvider *leveldbhelper.Provider
+	dbProvider db.Provider
 }
 
 // NewVersionedDBProvider instantiates VersionedDBProvider
