@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -28,7 +29,7 @@ func TestNewStoreProvider(t *testing.T) {
 	tempdir := t.TempDir()
 
 	storedir := filepath.Join(tempdir, "transientstore")
-	p, err := NewStoreProvider(storedir)
+	p, err := NewStoreProvider(storedir, db.GoLevelDB)
 	require.NoError(t, err)
 	require.NotNil(t, p)
 }
@@ -257,9 +258,9 @@ func TestPackageDropTransientStorage(t *testing.T) {
 	env.storeProvider.Close()
 
 	// drop the storage
-	require.NoError(t, Drop(env.storedir, ledgerID))
+	require.NoError(t, Drop(env.storedir, ledgerID, db.GoLevelDB))
 
-	sp, err := NewStoreProvider(env.storedir)
+	sp, err := NewStoreProvider(env.storedir, db.GoLevelDB)
 	require.NoError(t, err)
 	require.NotNil(t, sp)
 	defer sp.Close()
@@ -315,18 +316,18 @@ func TestOneAndOnlyOneTransientStorageProviderMayBeOpened(t *testing.T) {
 	env.storeProvider.Close()
 
 	// open the first provider
-	sp, err := NewStoreProvider(env.storedir)
+	sp, err := NewStoreProvider(env.storedir, db.GoLevelDB)
 	require.NoError(t, err)
 	require.NotNil(t, sp)
 
 	// opening a second provider is an error
-	_, err = NewStoreProvider(env.storedir)
+	_, err = NewStoreProvider(env.storedir, db.GoLevelDB)
 	require.ErrorContains(t, err, "as another peer node command is executing, wait for that command to complete its execution or terminate it before retrying: lock is already acquired on file")
 
 	// After closing the provider it may be reopened.
 	sp.Close()
 
-	sp, err = NewStoreProvider(env.storedir)
+	sp, err = NewStoreProvider(env.storedir, db.GoLevelDB)
 	require.NoError(t, err)
 	require.NotNil(t, sp)
 	defer sp.Close()
@@ -342,7 +343,7 @@ func TestDropWithRunningPeerIsError(t *testing.T) {
 	require.True(t, sp.fileLock.IsLocked())
 
 	// Dropping while a provider is open is an error.
-	err := Drop(env.storedir, "some-magical-invalid-ledger-which-does-not-exist")
+	err := Drop(env.storedir, "some-magical-invalid-ledger-which-does-not-exist", db.GoLevelDB)
 	require.Error(t, err, "as another peer node command is executing,"+
 		" wait for that command to complete its execution or terminate it before retrying")
 }
@@ -359,7 +360,7 @@ func TestPackageDropWithPeerLockIsError(t *testing.T) {
 	require.NoError(t, fileLock.Lock())
 	defer fileLock.Unlock()
 
-	require.ErrorContains(t, Drop(env.storedir, "drop-with-lock"),
+	require.ErrorContains(t, Drop(env.storedir, "drop-with-lock", db.GoLevelDB),
 		"as another peer node command is executing, wait for that command to complete its execution or terminate it before retrying")
 }
 
@@ -387,7 +388,7 @@ func TestProviderRestartAfterFailedDeletionScrubsPendingDeletions(t *testing.T) 
 	env.storeProvider.Close()
 
 	// re-opening the provider will trigger the processPendingStorageDeletions()
-	env.storeProvider, err = NewStoreProvider(env.storedir)
+	env.storeProvider, err = NewStoreProvider(env.storedir, db.GoLevelDB)
 	require.NoError(t, err)
 	sp = env.storeProvider.(*storeProvider)
 

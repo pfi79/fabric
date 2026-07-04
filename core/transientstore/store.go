@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/transientstore"
 	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/pkg/errors"
@@ -64,12 +65,12 @@ type EndorserPvtSimulationResults struct {
 // Implementation
 // ///////////////////////////////////////////
 
-// storeProvider encapsulates a leveldb provider which is used to store
+// storeProvider encapsulates a database provider which is used to store
 // private write sets of simulated transactions, and implements TransientStoreProvider
 // interface.
 type storeProvider struct {
 	dbProvider db.Provider
-	fileLock   *leveldbhelper.FileLock
+	fileLock   db.FileLock
 }
 
 // store holds an instance of a levelDB.
@@ -86,16 +87,16 @@ type RwsetScanner struct {
 }
 
 // NewStoreProvider instantiates TransientStoreProvider
-func NewStoreProvider(path string) (StoreProvider, error) {
+func NewStoreProvider(path, dbType string) (StoreProvider, error) {
 	// Ensure the routine is invoked while the peer is down.
 	lockPath := filepath.Join(filepath.Dir(path), transientStorageLockName)
-	lock := leveldbhelper.NewFileLock(lockPath)
+	lock := newFileLock(lockPath, dbType)
 	if err := lock.Lock(); err != nil {
 		return nil, errors.WithMessage(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
 	}
 
-	provider, err := newStoreProvider(path, lock)
+	provider, err := newStoreProvider(path, lock, dbType)
 	if err != nil {
 		lock.Unlock()
 		return nil, errors.WithMessagef(err, "could not construct storage provider in folder [%s]", path)
@@ -104,16 +105,32 @@ func NewStoreProvider(path string) (StoreProvider, error) {
 	return provider, nil
 }
 
+func newFileLock(lockPath, dbType string) db.FileLock {
+	switch dbType {
+	case db.PebbleDB:
+		return pebblehelper.NewFileLock(lockPath)
+	default:
+		return leveldbhelper.NewFileLock(lockPath)
+	}
+}
+
 // Private method used to unwind a dependency between the package level Drop and NewStoreProvider routines.
 // This routine must be invoked while holding the newStoreProvider file lock.
-func newStoreProvider(providerPath string, fileLock *leveldbhelper.FileLock) (*storeProvider, error) {
+func newStoreProvider(providerPath string, fileLock db.FileLock, dbType string) (*storeProvider, error) {
 	logger.Debugw("opening provider", "providerPath", providerPath)
 
 	if !fileLock.IsLocked() {
 		panic("newStoreProvider invoked without holding 'fileLock'")
 	}
 
-	dbProvider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: providerPath})
+	var dbProvider db.Provider
+	var err error
+	switch dbType {
+	case db.PebbleDB:
+		dbProvider, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: providerPath})
+	default:
+		dbProvider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: providerPath})
+	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "could not open dbprovider")
 	}
@@ -270,12 +287,12 @@ func (provider *storeProvider) processPendingStorageDeletions() error {
 // due to a crash, the storage will be marked with an UNDER_DELETION status in the a system
 // namespace db.  At the next peer startup, transient storage marked with UNDER_DELETION will
 // be scrubbed from the system.
-func Drop(providerPath, ledgerID string) error {
+func Drop(providerPath, ledgerID, dbType string) error {
 	logger.Infow("Dropping ledger from transient storage", "ledgerID", ledgerID, "providerPath", providerPath)
 
 	// Ensure the routine is invoked while the peer is down.
 	lockPath := filepath.Join(filepath.Dir(providerPath), transientStorageLockName)
-	lock := leveldbhelper.NewFileLock(lockPath)
+	lock := newFileLock(lockPath, dbType)
 	if err := lock.Lock(); err != nil {
 		return errors.New("as another peer node command is executing," +
 			" wait for that command to complete its execution or terminate it before retrying")
@@ -283,7 +300,7 @@ func Drop(providerPath, ledgerID string) error {
 	defer lock.Unlock()
 
 	// Set up a StoreProvider
-	provider, err := newStoreProvider(providerPath, lock)
+	provider, err := newStoreProvider(providerPath, lock, dbType)
 	if err != nil {
 		return errors.WithMessagef(err, "constructing provider from path [%s]", providerPath)
 	}

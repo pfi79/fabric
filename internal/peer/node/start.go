@@ -293,6 +293,7 @@ func serve(args []string) error {
 
 	transientStoreProvider, err := transientstore.NewStoreProvider(
 		filepath.Join(coreconfig.GetPath("peer.fileSystemPath"), "transientstore"),
+		viper.GetString("ledger.state.stateDatabase"),
 	)
 	if err != nil {
 		return errors.WithMessage(err, "failed to open transient store")
@@ -484,7 +485,7 @@ func serve(args []string) error {
 
 	peerInstance.GossipService = gossipService
 
-	if err := lifecycleCache.InitializeLocalChaincodes(); err != nil {
+	if err = lifecycleCache.InitializeLocalChaincodes(); err != nil {
 		return errors.WithMessage(err, "could not initialize local chaincodes")
 	}
 

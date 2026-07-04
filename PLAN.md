@@ -369,7 +369,7 @@ func NewProvider(path, dbType string) (*Provider, error)
 - **Вызывающая сторона:** `kv_ledger_provider.go:initStateDBProvider()` —
   передавать `dbType` из конфига.
 
-#### 10.2 transientstore [In progress]
+#### 10.2 transientstore [Done]
 
 **`core/transientstore/store.go`:**
 

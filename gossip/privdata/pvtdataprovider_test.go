@@ -922,7 +922,7 @@ func TestRetryFetchFromPeer(t *testing.T) {
 	ns1c2 := collectionPvtdataInfoFromTemplate("ns1", "c2", identity.GetMSPIdentifier(), ts.hash, endorser, signature)
 
 	tempdir := t.TempDir()
-	storeProvider, err := transientstore.NewStoreProvider(tempdir)
+	storeProvider, err := transientstore.NewStoreProvider(tempdir, ledger.GoLevelDB)
 	require.NoError(t, err, fmt.Sprintf("Failed to create store provider, got err %s", err))
 	store, err := storeProvider.OpenStore(ts.channelID)
 	require.NoError(t, err, fmt.Sprintf("Failed to open store, got err %s", err))
@@ -1015,7 +1015,7 @@ func TestSkipPullingAllInvalidTransactions(t *testing.T) {
 	ns1c2 := collectionPvtdataInfoFromTemplate("ns1", "c2", identity.GetMSPIdentifier(), ts.hash, endorser, signature)
 
 	tempdir := t.TempDir()
-	storeProvider, err := transientstore.NewStoreProvider(tempdir)
+	storeProvider, err := transientstore.NewStoreProvider(tempdir, ledger.GoLevelDB)
 	require.NoError(t, err, fmt.Sprintf("Failed to create store provider, got err %s", err))
 	store, err := storeProvider.OpenStore(ts.channelID)
 	require.NoError(t, err, fmt.Sprintf("Failed to open store, got err %s", err))
@@ -1114,7 +1114,7 @@ func TestRetrievedPvtdataPurgeBelowHeight(t *testing.T) {
 	ns1c1 := collectionPvtdataInfoFromTemplate("ns1", "c1", identity.GetMSPIdentifier(), ts.hash, endorser, signature)
 
 	tempdir := t.TempDir()
-	storeProvider, err := transientstore.NewStoreProvider(tempdir)
+	storeProvider, err := transientstore.NewStoreProvider(tempdir, ledger.GoLevelDB)
 	require.NoError(t, err, fmt.Sprintf("Failed to create store provider, got err %s", err))
 	store, err := storeProvider.OpenStore(ts.channelID)
 	require.NoError(t, err, fmt.Sprintf("Failed to open store, got err %s", err))
@@ -1254,7 +1254,7 @@ func testRetrievePvtdataSuccess(t *testing.T,
 	fmt.Println("\n" + scenario)
 
 	tempdir := t.TempDir()
-	storeProvider, err := transientstore.NewStoreProvider(tempdir)
+	storeProvider, err := transientstore.NewStoreProvider(tempdir, ledger.GoLevelDB)
 	require.NoError(t, err, fmt.Sprintf("Failed to create store provider, got err %s", err))
 	store, err := storeProvider.OpenStore(ts.channelID)
 	require.NoError(t, err, fmt.Sprintf("Failed to open store, got err %s", err))
@@ -1291,7 +1291,7 @@ func testRetrievePvtdataFailure(t *testing.T,
 	fmt.Println("\n" + scenario)
 
 	tempdir := t.TempDir()
-	storeProvider, err := transientstore.NewStoreProvider(tempdir)
+	storeProvider, err := transientstore.NewStoreProvider(tempdir, ledger.GoLevelDB)
 	require.NoError(t, err, fmt.Sprintf("Failed to create store provider, got err %s", err))
 	store, err := storeProvider.OpenStore(ts.channelID)
 	require.NoError(t, err, fmt.Sprintf("Failed to open store, got err %s", err))

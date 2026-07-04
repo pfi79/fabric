@@ -55,6 +55,13 @@ type Batch interface {
 	Reset()
 }
 
+// FileLock is a cross-process file lock.
+type FileLock interface {
+	Lock() error
+	Unlock()
+	IsLocked() bool
+}
+
 // Iterator iterates over a range of keys.
 type Iterator interface {
 	Next() bool
