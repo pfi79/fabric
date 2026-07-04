@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
@@ -45,6 +46,8 @@ type PrivateDataConfig struct {
 	// It is internally computed by the ledger component,
 	// so it is not in ledger.PrivateDataConfig and not exposed to other components.
 	StorePath string
+	// DBType is the type of database to use (goleveldb or pebbledb)
+	DBType string
 }
 
 // Store manages the permanent storage of private write sets for a ledger
@@ -180,12 +183,26 @@ type lastUpdatedOldBlocksList []uint64
 
 // NewProvider instantiates a StoreProvider
 func NewProvider(conf *PrivateDataConfig) (*Provider, error) {
-	dbProvider, err := leveldbhelper.NewProvider(
-		&leveldbhelper.Conf{
-			DBPath:         conf.StorePath,
-			ExpectedFormat: currentDataVersion,
-		},
+	var (
+		dbProvider db.Provider
+		err        error
 	)
+	switch conf.DBType {
+	case db.PebbleDB:
+		dbProvider, err = pebblehelper.NewProvider(
+			&pebblehelper.Conf{
+				DBPath:         conf.StorePath,
+				ExpectedFormat: currentDataVersion,
+			},
+		)
+	default:
+		dbProvider, err = leveldbhelper.NewProvider(
+			&leveldbhelper.Conf{
+				DBPath:         conf.StorePath,
+				ExpectedFormat: currentDataVersion,
+			},
+		)
+	}
 	if err != nil {
 		return nil, err
 	}

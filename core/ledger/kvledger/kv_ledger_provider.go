@@ -162,9 +162,11 @@ func (p *Provider) initBlockStoreProvider() error {
 }
 
 func (p *Provider) initPvtDataStoreProvider() error {
+	dbType := p.initializer.Config.StateDBConfig.StateDatabase
 	privateDataConfig := &pvtdatastorage.PrivateDataConfig{
 		PrivateDataConfig: p.initializer.Config.PrivateDataConfig,
 		StorePath:         PvtDataStorePath(p.initializer.Config.RootFSPath),
+		DBType:            dbType,
 	}
 	ledgerIDs, err := p.idStore.getActiveAndInactiveLedgerIDs()
 	if err != nil {

@@ -387,7 +387,7 @@ func NewStoreProvider(path, dbType string) (*StoreProvider, error)
   / `pebblehelper.NewFileLock`).
 - **Вызывающая сторона:** `kv_ledger_provider.go` — передавать `dbType` из конфига.
 
-#### 10.3 pvtdatastorage [In progress]
+#### 10.3 pvtdatastorage [Done]
 
 **Конфиг (`core/ledger/pvtdatastorage/store.go`):**
 

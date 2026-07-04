@@ -108,6 +108,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		&pvtdatastorage.PrivateDataConfig{
 			PrivateDataConfig: config.PrivateDataConfig,
 			StorePath:         PvtDataStorePath(config.RootFSPath),
+			DBType:            dbType,
 		},
 	)
 	if err != nil {
