@@ -413,7 +413,7 @@ type PrivateDataConfig struct {
 - **Вызывающая сторона:** `kv_ledger_provider.go:initPvtDataStoreProvider()`
   — заполнять `DBType` из конфига.
 
-#### 10.4 statecouchdb/redolog [In progress]
+#### 10.4 statecouchdb/redolog [Done]
 
 **`core/ledger/kvledger/txmgmt/statedb/statecouchdb/redolog.go`:**
 
@@ -581,7 +581,7 @@ FileLedger:
 
 ---
 
-### Этап 12: Утилита миграции — `cmd/dbmigrator`
+### Этап 11: Утилита миграции — `cmd/dbmigrator`
 
 **Отдельная standalone-программа**, собирается как `build/bin/dbmigrator`.
 
@@ -651,9 +651,9 @@ chains/<channelId>/index
 
 ---
 
-### Этап 13: Интеграционные тесты
+### Этап 12: Интеграционные тесты
 
-**13.1 Тест миграции хранилищ (Ginkgo + Gomega)**
+**12.1 Тест миграции хранилищ (Ginkgo + Gomega)**
 
 - Набор тестов `core/ledger/kvledger/txmgmt/statedb/statepebbledb/integration/`
 - Поднимает тестовую сеть через `nwo`
@@ -667,7 +667,7 @@ chains/<channelId>/index
   история, приватные данные
 - Аналогичный тест для orderer (fileledger index migration)
 
-**13.2 Бенчмарк производительности хранилищ**
+**12.2 Бенчмарк производительности хранилищ**
 
 - Тест `core/ledger/kvledger/txmgmt/statedb/statepebbledb/benchmark_test.go`
 - Сравнение GoLevelDB vs PebbleDB на одинаковых сценариях:

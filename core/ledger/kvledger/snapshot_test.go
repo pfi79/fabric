@@ -284,6 +284,7 @@ func TestSnapshotCouchDBIndexCreation(t *testing.T) {
 			RequestTimeout:      10 * time.Second,
 			InternalQueryLimit:  1000,
 			RedoLogPath:         filepath.Join(conf.RootFSPath, "couchdbRedoLogs"),
+			RedoLogDBType:       ledger.GoLevelDB,
 		}
 
 		destConf := testConfig(t)

@@ -61,7 +61,7 @@ func NewVersionedDBProvider(config *ledger.CouchDBConfig, metricsProvider metric
 	if err := checkExpectedDataformatVersion(couchInstance); err != nil {
 		return nil, err
 	}
-	p, err := newRedoLoggerProvider(config.RedoLogPath)
+	p, err := newRedoLoggerProvider(config.RedoLogPath, config.RedoLogDBType)
 	if err != nil {
 		return nil, err
 	}

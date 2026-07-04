@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 )
@@ -31,8 +32,15 @@ type redoRecord struct {
 	Version     *version.Height
 }
 
-func newRedoLoggerProvider(dirPath string) (*redoLoggerProvider, error) {
-	provider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dirPath})
+func newRedoLoggerProvider(dirPath, dbType string) (*redoLoggerProvider, error) {
+	var provider db.Provider
+	var err error
+	switch dbType {
+	case "pebbledb":
+		provider, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: dirPath})
+	default:
+		provider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dirPath})
+	}
 	if err != nil {
 		return nil, err
 	}

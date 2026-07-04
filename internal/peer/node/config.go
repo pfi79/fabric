@@ -86,6 +86,7 @@ func ledgerConfig() *ledger.Config {
 			MaxBatchUpdateSize:    maxBatchUpdateSize,
 			CreateGlobalChangesDB: viper.GetBool("ledger.state.couchDBConfig.createGlobalChangesDB"),
 			RedoLogPath:           filepath.Join(ledgersDataRootDir, "couchdbRedoLogs"),
+			RedoLogDBType:         "goleveldb", // TODO change on var PFI
 			UserCacheSizeMBs:      viper.GetInt("ledger.state.couchDBConfig.cacheSize"),
 		}
 	}

@@ -34,7 +34,7 @@ type TestEnv interface {
 // For example, to skip CouchDB tests, remove &CouchDBLockBasedEnv{}
 var testEnvs = []TestEnv{&LevelDBTestEnv{}, &CouchDBTestEnv{}}
 
-///////////// LevelDB Environment //////////////
+// /////////// LevelDB Environment //////////////
 
 // LevelDBTestEnv implements TestEnv interface for leveldb based storage
 type LevelDBTestEnv struct {
@@ -97,7 +97,7 @@ func (env *LevelDBTestEnv) Cleanup() {
 	env.bookkeeperTestEnv.Cleanup()
 }
 
-///////////// CouchDB Environment //////////////
+// /////////// CouchDB Environment //////////////
 
 // CouchDBTestEnv implements TestEnv interface for couchdb based storage
 type CouchDBTestEnv struct {
@@ -145,6 +145,7 @@ func (env *CouchDBTestEnv) Init(t testing.TB) {
 				InternalQueryLimit:  1000,
 				MaxBatchUpdateSize:  1000,
 				RedoLogPath:         redoPath,
+				RedoLogDBType:       ledger.GoLevelDB,
 			},
 		},
 		LevelDBPath: "",

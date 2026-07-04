@@ -390,6 +390,7 @@ func startCouchDBWithV13Data(t *testing.T, ledgerFSRoot string) (*ledger.CouchDB
 		MaxRetriesOnStartup: 3,
 		RequestTimeout:      10 * time.Second,
 		RedoLogPath:         filepath.Join(ledgerFSRoot, "couchdbRedoLogs"),
+		RedoLogDBType:       ledger.GoLevelDB,
 	}
 
 	return couchdbConfig, cleanup
