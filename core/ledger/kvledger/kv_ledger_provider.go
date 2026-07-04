@@ -239,9 +239,14 @@ func (p *Provider) initStateListeners() {
 }
 
 func (p *Provider) initStateDBProvider() error {
+	dbType := db.GoLevelDB
+	if p.initializer.Config.StateDBConfig.StateDatabase == db.PebbleDB {
+		dbType = db.PebbleDB
+	}
 	var err error
 	p.bookkeepingProvider, err = bookkeeping.NewProvider(
 		BookkeeperDBPath(p.initializer.Config.RootFSPath),
+		dbType,
 	)
 	if err != nil {
 		return err

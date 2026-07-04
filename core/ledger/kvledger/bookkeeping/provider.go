@@ -11,6 +11,7 @@ import (
 
 	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 )
 
 // Category is an enum type for representing the bookkeeping of different type
@@ -31,8 +32,17 @@ type Provider struct {
 }
 
 // NewProvider instantiates a new provider
-func NewProvider(dbPath string) (*Provider, error) {
-	dbProvider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dbPath})
+func NewProvider(dbPath, dbType string) (*Provider, error) {
+	var (
+		dbProvider db.Provider
+		err        error
+	)
+	switch dbType {
+	case db.PebbleDB:
+		dbProvider, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: dbPath})
+	default:
+		dbProvider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dbPath})
+	}
 	if err != nil {
 		return nil, err
 	}

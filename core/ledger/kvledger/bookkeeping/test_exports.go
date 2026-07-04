@@ -19,6 +19,7 @@ package bookkeeping
 import (
 	"testing"
 
+	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +33,7 @@ type TestEnv struct {
 // NewTestEnv construct a TestEnv for testing
 func NewTestEnv(t testing.TB) *TestEnv {
 	dbPath := t.TempDir()
-	provider, err := NewProvider(dbPath)
+	provider, err := NewProvider(dbPath, db.GoLevelDB)
 	require.NoError(t, err)
 	return &TestEnv{t, provider, dbPath}
 }

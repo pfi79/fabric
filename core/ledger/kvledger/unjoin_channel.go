@@ -64,10 +64,11 @@ func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 
 // removeLedgerData removes the data for a given ledger. This function should be invoked when the peer is not running and the caller should hold the file lock for the KVLedgerProvider
 func removeLedgerData(config *ledger.Config, ledgerID string) error {
-	blkStoreType := ledger.GoLevelDB
+	dbType := ledger.GoLevelDB
 	if config.StateDBConfig.StateDatabase == ledger.PebbleDB {
-		blkStoreType = ledger.PebbleDB
+		dbType = ledger.PebbleDB
 	}
+
 	blkStoreProvider, err := blkstorage.NewProvider(
 		blkstorage.NewConf(
 			BlockStorePath(config.RootFSPath),
@@ -75,14 +76,14 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		),
 		&blkstorage.IndexConfig{AttrsToIndex: attrsToIndex},
 		&disabled.Provider{},
-		blkStoreType,
+		dbType,
 	)
 	if err != nil {
 		return err
 	}
 	defer blkStoreProvider.Close()
 
-	bookkeepingProvider, err := bookkeeping.NewProvider(BookkeeperDBPath(config.RootFSPath))
+	bookkeepingProvider, err := bookkeeping.NewProvider(BookkeeperDBPath(config.RootFSPath), dbType)
 	if err != nil {
 		return err
 	}
@@ -114,13 +115,13 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	}
 	defer pvtdataStoreProvider.Close()
 
-	dbType := db.GoLevelDB
+	historyDBType := db.GoLevelDB
 	if config.HistoryDBConfig.StateDatabase == db.PebbleDB {
-		dbType = db.PebbleDB
+		historyDBType = db.PebbleDB
 	}
 	historydbProvider, err := history.NewDBProvider(
 		&history.HistoryDBConfig{
-			DBType: dbType,
+			DBType: historyDBType,
 			DBPath: HistoryDBPath(config.RootFSPath),
 		},
 	)

@@ -353,7 +353,7 @@ func New(directory string, dbType string, metricsProvider metrics.Provider) (blo
 конфиг и переключаться между `leveldbhelper.NewProvider` и
 `pebblehelper.NewProvider`.
 
-#### 10.1 bookkeeping [In progress]
+#### 10.1 bookkeeping [Done]
 
 **`core/ledger/kvledger/bookkeeping/provider.go`:**
 
