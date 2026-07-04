@@ -21,7 +21,10 @@ import (
 func UpgradeDBs(config *ledger.Config) error {
 	rootFSPath := config.RootFSPath
 	fileLockPath := fileLockPath(rootFSPath)
-	fileLock := leveldbhelper.NewFileLock(fileLockPath)
+	fileLock, err := newFileLock(fileLockPath, config.StateDBConfig.StateDatabase)
+	if err != nil {
+		return err
+	}
 	if err := fileLock.Lock(); err != nil {
 		return errors.Wrap(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")

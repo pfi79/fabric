@@ -427,7 +427,7 @@ func newRedoLoggerProvider(dirPath, dbType string) (*redoLoggerProvider, error)
 
 - Коммутатор по `dbType` в `newRedoLoggerProvider`.
 
-#### 10.5 kv_ledger_provider — FileLock [In progress]
+#### 10.5 kv_ledger_provider — FileLock [Done]
 
 **`core/ledger/kvledger/kv_ledger_provider.go`:**
 

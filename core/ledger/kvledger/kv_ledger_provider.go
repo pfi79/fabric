@@ -67,7 +67,7 @@ type Provider struct {
 	initializer          *ledger.Initializer
 	collElgNotifier      *collElgNotifier
 	stats                *stats
-	fileLock             *leveldbhelper.FileLock
+	fileLock             db.FileLock
 }
 
 // NewProvider instantiates a new Provider.
@@ -90,40 +90,44 @@ func NewProvider(initializer *ledger.Initializer) (pr *Provider, e error) {
 		}
 	}()
 
+	dbType := initializer.Config.StateDBConfig.StateDatabase
 	fileLockPath := fileLockPath(initializer.Config.RootFSPath)
-	fileLock := leveldbhelper.NewFileLock(fileLockPath)
-	if err := fileLock.Lock(); err != nil {
+	fileLock, err := newFileLock(fileLockPath, dbType)
+	if err != nil {
+		return nil, err
+	}
+	if err = fileLock.Lock(); err != nil {
 		return nil, errors.Wrap(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
 	}
 
 	p.fileLock = fileLock
 
-	if err := p.initLedgerIDInventory(); err != nil {
+	if err = p.initLedgerIDInventory(); err != nil {
 		return nil, err
 	}
-	if err := p.initBlockStoreProvider(); err != nil {
+	if err = p.initBlockStoreProvider(); err != nil {
 		return nil, err
 	}
-	if err := p.initPvtDataStoreProvider(); err != nil {
+	if err = p.initPvtDataStoreProvider(); err != nil {
 		return nil, err
 	}
-	if err := p.initHistoryDBProvider(); err != nil {
+	if err = p.initHistoryDBProvider(); err != nil {
 		return nil, err
 	}
-	if err := p.initConfigHistoryManager(); err != nil {
+	if err = p.initConfigHistoryManager(); err != nil {
 		return nil, err
 	}
 	p.initCollElgNotifier()
 	p.initStateListeners()
-	if err := p.initStateDBProvider(); err != nil {
+	if err = p.initStateDBProvider(); err != nil {
 		return nil, err
 	}
 	p.initLedgerStatistics()
-	if err := p.deletePartialLedgers(); err != nil {
+	if err = p.deletePartialLedgers(); err != nil {
 		return nil, err
 	}
-	if err := p.initSnapshotDir(); err != nil {
+	if err = p.initSnapshotDir(); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -172,7 +176,7 @@ func (p *Provider) initPvtDataStoreProvider() error {
 	if err != nil {
 		return err
 	}
-	if err := pvtdatastorage.CheckAndConstructHashedIndex(privateDataConfig.StorePath, ledgerIDs); err != nil {
+	if err = pvtdatastorage.CheckAndConstructHashedIndex(privateDataConfig.StorePath, ledgerIDs); err != nil {
 		return err
 	}
 	pvtdataStoreProvider, err := pvtdatastorage.NewProvider(privateDataConfig)
@@ -466,7 +470,7 @@ func (p *Provider) deletePartialLedgers() error {
 	defer itr.Release()
 	for {
 		hasMore := itr.Next()
-		err := itr.Error()
+		err = itr.Error()
 		if err != nil {
 			return errors.WithMessage(err, "error while iterating over ledger list while scanning for incomplete ledgers")
 		}
@@ -475,7 +479,7 @@ func (p *Provider) deletePartialLedgers() error {
 		}
 		ledgerID := ledgerIDFromMetadataKey(itr.Key())
 		metadata := &msgs.LedgerMetadata{}
-		if err := proto.Unmarshal(itr.Value(), metadata); err != nil {
+		if err = proto.Unmarshal(itr.Value(), metadata); err != nil {
 			return errors.Wrapf(err, "error while unmarshalling metadata bytes for ledger [%s]", ledgerID)
 		}
 		if metadata.Status == msgs.Status_UNDER_CONSTRUCTION || metadata.Status == msgs.Status_UNDER_DELETION {
@@ -484,7 +488,7 @@ func (p *Provider) deletePartialLedgers() error {
 				"ledgerID", ledgerID,
 				"Status", metadata.Status,
 			)
-			if err := p.runCleanup(ledgerID); err != nil {
+			if err = p.runCleanup(ledgerID); err != nil {
 				logger.Errorw(
 					"Error while deleting a partially created ledger at start",
 					"ledgerID", ledgerID,
@@ -701,7 +705,7 @@ func (s *idStore) getLedgerMetadata(ledgerID string) (*msgs.LedgerMetadata, erro
 		return nil, err
 	}
 	metadata := &msgs.LedgerMetadata{}
-	if err := proto.Unmarshal(val, metadata); err != nil {
+	if err = proto.Unmarshal(val, metadata); err != nil {
 		logger.Errorf("Error unmarshalling ledger metadata: %s", err)
 		return nil, errors.Wrapf(err, "error unmarshalling ledger metadata")
 	}
@@ -773,4 +777,14 @@ func metadataKey(ledgerID string) []byte {
 
 func ledgerIDFromMetadataKey(key []byte) string {
 	return string(key[len(metadataKeyPrefix):])
+}
+
+// newFileLock creates a FileLock based on the dbType.
+func newFileLock(filePath, dbType string) (db.FileLock, error) {
+	switch dbType {
+	case db.PebbleDB:
+		return pebblehelper.NewFileLock(filePath), nil
+	default:
+		return leveldbhelper.NewFileLock(filePath), nil
+	}
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/util/db"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
@@ -28,7 +27,10 @@ import (
 // invoked while the peer is shut down.
 func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 	// Ensure the routine is invoked while the peer is down.
-	fileLock := leveldbhelper.NewFileLock(fileLockPath(config.RootFSPath))
+	fileLock, err := newFileLock(fileLockPath(config.RootFSPath), config.StateDBConfig.StateDatabase)
+	if err != nil {
+		return err
+	}
 	if err := fileLock.Lock(); err != nil {
 		return errors.WithMessage(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
