@@ -17,7 +17,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/transientstore"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/policydsl"
 	commonutil "github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/ledger"

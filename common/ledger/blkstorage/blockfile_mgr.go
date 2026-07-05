@@ -16,7 +16,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/internal/fileutil"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"

@@ -14,9 +14,9 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/snapshot"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/internal/pkg/txflags"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protowire"

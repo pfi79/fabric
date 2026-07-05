@@ -8,7 +8,7 @@ package pebblehelper
 
 import (
 	"github.com/cockroachdb/pebble/v2"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 )
 
 // PebbleIterator wraps a pebble.Iterator and implements db.Iterator.

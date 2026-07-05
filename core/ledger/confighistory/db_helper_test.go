@@ -12,7 +12,7 @@ import (
 	"os"
 	"testing"
 
-	dbpkg "github.com/hyperledger/fabric/common/ledger/util/db"
+	dbpkg "github.com/hyperledger/fabric/common/ledger"
 	"github.com/stretchr/testify/require"
 )
 

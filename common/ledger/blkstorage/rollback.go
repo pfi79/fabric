@@ -9,7 +9,7 @@ package blkstorage
 import (
 	"os"
 
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/internal/fileutil"

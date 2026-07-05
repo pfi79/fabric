@@ -11,7 +11,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/queryresult"
 	commonledger "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
@@ -19,7 +18,7 @@ import (
 
 // QueryExecutor is a query executor against the history DB
 type QueryExecutor struct {
-	dbHandle   db.DBHandle
+	dbHandle   commonledger.DBHandle
 	blockStore *blkstorage.BlockStore
 }
 
@@ -45,7 +44,7 @@ type historyScanner struct {
 	rangeScan  *rangeScan
 	namespace  string
 	key        string
-	dbItr      db.Iterator
+	dbItr      commonledger.Iterator
 	blockStore *blkstorage.BlockStore
 }
 

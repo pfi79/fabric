@@ -11,7 +11,7 @@ import (
 	"encoding/binary"
 	"math"
 
-	dbpkg "github.com/hyperledger/fabric/common/ledger/util/db"
+	dbpkg "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/pkg/errors"

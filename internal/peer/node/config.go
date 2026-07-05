@@ -52,8 +52,14 @@ func ledgerConfig() *ledger.Config {
 	if snapshotsRootDir == "" {
 		snapshotsRootDir = filepath.Join(fsPath, "snapshots")
 	}
+	commonDBType := viper.GetString("ledger.stateDatabase")
+	if commonDBType == "" {
+		commonDBType = ledger.GoLevelDB
+	}
+
 	conf := &ledger.Config{
-		RootFSPath: ledgersDataRootDir,
+		RootFSPath:    ledgersDataRootDir,
+		StateDatabase: commonDBType,
 		StateDBConfig: &ledger.StateDBConfig{
 			StateDatabase: viper.GetString("ledger.state.stateDatabase"),
 			CouchDB:       &ledger.CouchDBConfig{},
@@ -66,8 +72,7 @@ func ledgerConfig() *ledger.Config {
 			PurgedKeyAuditLogging:               purgedKeyAuditLogging,
 		},
 		HistoryDBConfig: &ledger.HistoryDBConfig{
-			Enabled:       viper.GetBool("ledger.history.enableHistoryDatabase"),
-			StateDatabase: viper.GetString("ledger.history.stateDatabase"),
+			Enabled: viper.GetBool("ledger.history.enableHistoryDatabase"),
 		},
 		SnapshotsConfig: &ledger.SnapshotsConfig{
 			RootDir: snapshotsRootDir,
@@ -86,7 +91,7 @@ func ledgerConfig() *ledger.Config {
 			MaxBatchUpdateSize:    maxBatchUpdateSize,
 			CreateGlobalChangesDB: viper.GetBool("ledger.state.couchDBConfig.createGlobalChangesDB"),
 			RedoLogPath:           filepath.Join(ledgersDataRootDir, "couchdbRedoLogs"),
-			RedoLogDBType:         "goleveldb", // TODO change on var PFI
+			RedoLogDBType:         commonDBType,
 			UserCacheSizeMBs:      viper.GetInt("ledger.state.couchDBConfig.cacheSize"),
 		}
 	}

@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blockledger/fileledger/mock"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/orderer/common/filerepo"
 	"github.com/stretchr/testify/require"
 )

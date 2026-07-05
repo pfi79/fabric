@@ -8,7 +8,7 @@ package confighistorytest
 
 import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/mock"

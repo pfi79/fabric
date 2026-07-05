@@ -12,7 +12,7 @@ import (
 
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/internal/fileutil"
 	"github.com/pkg/errors"
 )

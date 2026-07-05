@@ -29,7 +29,8 @@ func TestLedgerConfig(t *testing.T) {
 				"ledger.state.stateDatabase": "goleveldb",
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
 					StateDatabase: "goleveldb",
 					CouchDB:       &ledger.CouchDBConfig{},
@@ -64,7 +65,8 @@ func TestLedgerConfig(t *testing.T) {
 				"ledger.state.couchDBConfig.cacheSize":             64,
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
 					StateDatabase: "CouchDB",
 					CouchDB: &ledger.CouchDBConfig{
@@ -121,7 +123,8 @@ func TestLedgerConfig(t *testing.T) {
 				"ledger.snapshots.rootDir":                                "/peerfs/customLocationForsnapshots",
 			},
 			expected: &ledger.Config{
-				RootFSPath: "/peerfs/ledgersData",
+				RootFSPath:    "/peerfs/ledgersData",
+				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
 					StateDatabase: "CouchDB",
 					CouchDB: &ledger.CouchDBConfig{

@@ -13,7 +13,8 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/transientstore"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/common/util"
@@ -90,7 +91,7 @@ type RwsetScanner struct {
 func NewStoreProvider(path, dbType string) (StoreProvider, error) {
 	// Ensure the routine is invoked while the peer is down.
 	lockPath := filepath.Join(filepath.Dir(path), transientStorageLockName)
-	lock := newFileLock(lockPath, dbType)
+	lock := dbfactory.NewFileLock(dbType, lockPath)
 	if err := lock.Lock(); err != nil {
 		return nil, errors.WithMessage(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
@@ -103,15 +104,6 @@ func NewStoreProvider(path, dbType string) (StoreProvider, error) {
 	}
 
 	return provider, nil
-}
-
-func newFileLock(lockPath, dbType string) db.FileLock {
-	switch dbType {
-	case db.PebbleDB:
-		return pebblehelper.NewFileLock(lockPath)
-	default:
-		return leveldbhelper.NewFileLock(lockPath)
-	}
 }
 
 // Private method used to unwind a dependency between the package level Drop and NewStoreProvider routines.
@@ -292,7 +284,7 @@ func Drop(providerPath, ledgerID, dbType string) error {
 
 	// Ensure the routine is invoked while the peer is down.
 	lockPath := filepath.Join(filepath.Dir(providerPath), transientStorageLockName)
-	lock := newFileLock(lockPath, dbType)
+	lock := dbfactory.NewFileLock(dbType, lockPath)
 	if err := lock.Lock(); err != nil {
 		return errors.New("as another peer node command is executing," +
 			" wait for that command to complete its execution or terminate it before retrying")

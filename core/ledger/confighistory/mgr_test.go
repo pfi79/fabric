@@ -17,8 +17,8 @@ import (
 
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	dbpkg "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/snapshot"
-	dbpkg "github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/mock"
 	"github.com/stretchr/testify/require"

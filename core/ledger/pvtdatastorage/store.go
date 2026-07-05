@@ -15,7 +15,7 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger"
@@ -236,6 +236,7 @@ func (p *Provider) SnapshotDataImporterFor(
 		membershipProvider,
 		configHistoryRetriever,
 		tempDirRoot,
+		p.pvtData.DBType,
 	)
 }
 

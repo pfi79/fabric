@@ -8,6 +8,7 @@ package kvledger
 
 import (
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
 	"github.com/pkg/errors"
@@ -18,10 +19,7 @@ import (
 func RebuildDBs(config *ledger.Config) error {
 	rootFSPath := config.RootFSPath
 	fileLockPath := fileLockPath(rootFSPath)
-	fileLock, err := newFileLock(fileLockPath, config.StateDBConfig.StateDatabase)
-	if err != nil {
-		return err
-	}
+	fileLock := dbfactory.NewFileLock(config.StateDBConfig.StateDatabase, fileLockPath)
 	if err := fileLock.Lock(); err != nil {
 		return errors.Wrap(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")

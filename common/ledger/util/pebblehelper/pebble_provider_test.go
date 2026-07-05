@@ -11,8 +11,8 @@ import (
 	"os"
 	"testing"
 
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/stretchr/testify/require"
 )
 

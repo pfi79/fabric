@@ -11,8 +11,9 @@ import (
 	"github.com/hyperledger/fabric-lib-go/healthz"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
@@ -27,10 +28,7 @@ import (
 // invoked while the peer is shut down.
 func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 	// Ensure the routine is invoked while the peer is down.
-	fileLock, err := newFileLock(fileLockPath(config.RootFSPath), config.StateDBConfig.StateDatabase)
-	if err != nil {
-		return err
-	}
+	fileLock := dbfactory.NewFileLock(config.StateDBConfig.StateDatabase, fileLockPath(config.RootFSPath))
 	if err := fileLock.Lock(); err != nil {
 		return errors.WithMessage(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
@@ -119,7 +117,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	defer pvtdataStoreProvider.Close()
 
 	historyDBType := db.GoLevelDB
-	if config.HistoryDBConfig.StateDatabase == db.PebbleDB {
+	if config.StateDatabase == db.PebbleDB {
 		historyDBType = db.PebbleDB
 	}
 	historydbProvider, err := history.NewDBProvider(

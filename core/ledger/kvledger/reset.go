@@ -8,6 +8,7 @@ package kvledger
 
 import (
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/pkg/errors"
 )
@@ -20,10 +21,7 @@ func ResetAllKVLedgers(rootFSPath string) error {
 // ResetAllKVLedgersWithType resets all ledgers to the genesis block with the given DB type.
 func ResetAllKVLedgersWithType(rootFSPath, stateDBType string) error {
 	fileLockPath := fileLockPath(rootFSPath)
-	fileLock, err := newFileLock(fileLockPath, stateDBType)
-	if err != nil {
-		return err
-	}
+	fileLock := dbfactory.NewFileLock(stateDBType, fileLockPath)
 	if err := fileLock.Lock(); err != nil {
 		return errors.Wrap(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")

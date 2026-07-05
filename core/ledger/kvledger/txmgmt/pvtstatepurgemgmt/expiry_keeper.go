@@ -8,8 +8,8 @@ package pvtstatepurgemgmt
 
 import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"google.golang.org/protobuf/proto"
 )

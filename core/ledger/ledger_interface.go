@@ -46,6 +46,10 @@ type Initializer struct {
 type Config struct {
 	// RootFSPath is the top-level directory where ledger files are stored.
 	RootFSPath string
+	// StateDatabase is the common database type for all internal KV stores.
+	// Supported options are "goleveldb" and "pebbledb".
+	// Individual configs (StateDBConfig) can override this.
+	StateDatabase string
 	// StateDBConfig holds the configuration parameters for the state database.
 	StateDBConfig *StateDBConfig
 	// PrivateDataConfig holds the configuration parameters for the private data store.
@@ -129,9 +133,6 @@ type PrivateDataConfig struct {
 // HistoryDBConfig is a structure used to configure the transaction history database.
 type HistoryDBConfig struct {
 	Enabled bool
-	// StateDatabase is the database to use for storing last known state.  The
-	// supported options are "goleveldb", "pebbledb" (captured in the constants GoLevelDB, PebbleDB).
-	StateDatabase string
 }
 
 // SnapshotsConfig is a structure used to configure snapshot function

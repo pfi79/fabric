@@ -15,8 +15,8 @@ import (
 
 	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/stretchr/testify/require"
 )

@@ -12,8 +12,8 @@ import (
 	"os"
 	"sync"
 
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/pkg/errors"
 )
 

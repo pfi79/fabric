@@ -12,8 +12,8 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/pebble/v2"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/pkg/errors"
 )
 

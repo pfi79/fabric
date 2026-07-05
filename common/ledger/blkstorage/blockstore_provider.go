@@ -12,8 +12,8 @@ import (
 
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	"github.com/hyperledger/fabric-lib-go/common/metrics"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/internal/fileutil"
@@ -61,13 +61,10 @@ type BlockStoreProvider struct {
 // NewProvider constructs a filesystem based block store provider.
 // dbType is one of "goleveldb" or "pebbledb".
 func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.Provider, dbType string) (*BlockStoreProvider, error) {
-	dbConf := &leveldbhelper.Conf{
-		DBPath:         conf.getIndexDir(),
-		ExpectedFormat: dataFormatVersion(indexConfig),
-	}
-
-	var prov db.Provider
-	var err error
+	var (
+		prov db.Provider
+		err  error
+	)
 	switch dbType {
 	case db.PebbleDB:
 		pbConf := &pebblehelper.Conf{
@@ -76,6 +73,10 @@ func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.P
 		}
 		prov, err = pebblehelper.NewProvider(pbConf)
 	default:
+		dbConf := &leveldbhelper.Conf{
+			DBPath:         conf.getIndexDir(),
+			ExpectedFormat: dataFormatVersion(indexConfig),
+		}
 		prov, err = leveldbhelper.NewProvider(dbConf)
 	}
 	if err != nil {
@@ -83,7 +84,7 @@ func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.P
 	}
 
 	dirPath := conf.getChainsDir()
-	if _, err := os.Stat(dirPath); err != nil {
+	if _, err = os.Stat(dirPath); err != nil {
 		if !os.IsNotExist(err) { // NotExist is the only permitted error type
 			return nil, errors.Wrapf(err, "failed to read ledger directory %s", dirPath)
 		}

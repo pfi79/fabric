@@ -12,9 +12,10 @@ import (
 	"os"
 
 	"github.com/bits-and-blooms/bitset"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/chaincode/implicitcollection"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
@@ -45,8 +46,9 @@ func newSnapshotDataImporter(
 	membershipProvider ledger.MembershipInfoProvider,
 	configHistoryRetriever *confighistory.Retriever,
 	tempDirRoot string,
+	dbType string,
 ) (*SnapshotDataImporter, error) {
-	rowsSorter, err := newSnapshotRowsSorter(tempDirRoot)
+	rowsSorter, err := newSnapshotRowsSorter(tempDirRoot, dbType)
 	if err != nil {
 		return nil, err
 	}
@@ -394,14 +396,23 @@ type snapshotRowsSorter struct {
 	batchSize  int
 }
 
-func newSnapshotRowsSorter(tempDirRoot string) (*snapshotRowsSorter, error) {
+func newSnapshotRowsSorter(tempDirRoot, dbType string) (*snapshotRowsSorter, error) {
 	tempDir, err := os.MkdirTemp(tempDirRoot, "pvtdatastore-snapshotdatainporter-")
 	if err != nil {
 		return nil, errors.Wrap(err, "error while creating temp dir for sorting rows")
 	}
-	dbProvider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{
-		DBPath: tempDir,
-	})
+
+	var dbProvider db.Provider
+	switch dbType {
+	case db.PebbleDB:
+		dbProvider, err = pebblehelper.NewProvider(&pebblehelper.Conf{
+			DBPath: tempDir,
+		})
+	default:
+		dbProvider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{
+			DBPath: tempDir,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}

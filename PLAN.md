@@ -502,7 +502,7 @@ func NewProvider(conf *Conf, dbType string) (Provider, error) {
 Тогда все потребители вызывают единую фабрику `db.CreateDB(conf, dbType)`
 вместо ручного свитчинга.
 
-#### 10.7 Конфигурация: peer
+#### 10.7 Конфигурация: peer [Done]
 
 **`core/ledger/kvledger/kv_ledger_provider.go` — `Provider`:**
 
@@ -538,7 +538,7 @@ func (p *Provider) initTransientStoreProvider() {
 Для History, ConfigHistory и BlockStore — уже сделано (передают `dbType`
 из конфига).
 
-#### 10.8 Обновление конфигурации
+#### 10.8 Обновление конфигурации [Done]
 
 **`sampleconfig/core.yaml`:**
 ```yaml
@@ -546,7 +546,7 @@ ledger:
   state:
     stateDatabase: goleveldb   # уже есть
   history:
-    stateDatabase: goleveldb   # уже есть
+    stateDatabase: goleveldb   # удалить, использовать параметр internalDatabases
   # Новые поля — единый тип БД для всех вспомогательных хранилищ:
   internalDatabases:
     stateDatabase: goleveldb   # bookkeeper, pvtdata, transient, redo-log
@@ -567,7 +567,7 @@ ledger:
 Тогда пользователь конфигурирует один раз, а history/state могут
 переопределяться.
 
-#### 10.9 Обновлённая конфигурация orderer
+#### 10.9 Обновлённая конфигурация orderer [Done]
 
 **`sampleconfig/orderer.yaml`:**
 ```yaml

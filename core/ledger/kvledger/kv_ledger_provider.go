@@ -13,9 +13,10 @@ import (
 	"path/filepath"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger"
@@ -68,6 +69,7 @@ type Provider struct {
 	collElgNotifier      *collElgNotifier
 	stats                *stats
 	fileLock             db.FileLock
+	dbType               string
 }
 
 // NewProvider instantiates a new Provider.
@@ -75,6 +77,7 @@ type Provider struct {
 func NewProvider(initializer *ledger.Initializer) (pr *Provider, e error) {
 	p := &Provider{
 		initializer: initializer,
+		dbType:      initializer.Config.StateDatabase,
 	}
 
 	defer func() {
@@ -90,52 +93,47 @@ func NewProvider(initializer *ledger.Initializer) (pr *Provider, e error) {
 		}
 	}()
 
-	dbType := initializer.Config.StateDBConfig.StateDatabase
 	fileLockPath := fileLockPath(initializer.Config.RootFSPath)
-	fileLock, err := newFileLock(fileLockPath, dbType)
-	if err != nil {
-		return nil, err
-	}
-	if err = fileLock.Lock(); err != nil {
+	fileLock := dbfactory.NewFileLock(p.dbType, fileLockPath)
+	if err := fileLock.Lock(); err != nil {
 		return nil, errors.Wrap(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
 	}
 
 	p.fileLock = fileLock
 
-	if err = p.initLedgerIDInventory(); err != nil {
+	if err := p.initLedgerIDInventory(); err != nil {
 		return nil, err
 	}
-	if err = p.initBlockStoreProvider(); err != nil {
+	if err := p.initBlockStoreProvider(); err != nil {
 		return nil, err
 	}
-	if err = p.initPvtDataStoreProvider(); err != nil {
+	if err := p.initPvtDataStoreProvider(); err != nil {
 		return nil, err
 	}
-	if err = p.initHistoryDBProvider(); err != nil {
+	if err := p.initHistoryDBProvider(); err != nil {
 		return nil, err
 	}
-	if err = p.initConfigHistoryManager(); err != nil {
+	if err := p.initConfigHistoryManager(); err != nil {
 		return nil, err
 	}
 	p.initCollElgNotifier()
 	p.initStateListeners()
-	if err = p.initStateDBProvider(); err != nil {
+	if err := p.initStateDBProvider(); err != nil {
 		return nil, err
 	}
 	p.initLedgerStatistics()
-	if err = p.deletePartialLedgers(); err != nil {
+	if err := p.deletePartialLedgers(); err != nil {
 		return nil, err
 	}
-	if err = p.initSnapshotDir(); err != nil {
+	if err := p.initSnapshotDir(); err != nil {
 		return nil, err
 	}
 	return p, nil
 }
 
 func (p *Provider) initLedgerIDInventory() error {
-	dbType := p.initializer.Config.StateDBConfig.StateDatabase
-	idStore, err := openIDStore(LedgerProviderPath(p.initializer.Config.RootFSPath), dbType)
+	idStore, err := openIDStore(LedgerProviderPath(p.initializer.Config.RootFSPath), p.dbType)
 	if err != nil {
 		return err
 	}
@@ -144,10 +142,6 @@ func (p *Provider) initLedgerIDInventory() error {
 }
 
 func (p *Provider) initBlockStoreProvider() error {
-	blkStoreType := ledger.GoLevelDB
-	if p.initializer.Config.StateDBConfig.StateDatabase == ledger.PebbleDB {
-		blkStoreType = ledger.PebbleDB
-	}
 	indexConfig := &blkstorage.IndexConfig{AttrsToIndex: attrsToIndex}
 	blkStoreProvider, err := blkstorage.NewProvider(
 		blkstorage.NewConf(
@@ -156,7 +150,7 @@ func (p *Provider) initBlockStoreProvider() error {
 		),
 		indexConfig,
 		p.initializer.MetricsProvider,
-		blkStoreType,
+		p.dbType,
 	)
 	if err != nil {
 		return err
@@ -166,11 +160,10 @@ func (p *Provider) initBlockStoreProvider() error {
 }
 
 func (p *Provider) initPvtDataStoreProvider() error {
-	dbType := p.initializer.Config.StateDBConfig.StateDatabase
 	privateDataConfig := &pvtdatastorage.PrivateDataConfig{
 		PrivateDataConfig: p.initializer.Config.PrivateDataConfig,
 		StorePath:         PvtDataStorePath(p.initializer.Config.RootFSPath),
-		DBType:            dbType,
+		DBType:            p.dbType,
 	}
 	ledgerIDs, err := p.idStore.getActiveAndInactiveLedgerIDs()
 	if err != nil {
@@ -192,14 +185,9 @@ func (p *Provider) initHistoryDBProvider() error {
 		return nil
 	}
 
-	dbType := db.GoLevelDB
-	if p.initializer.Config.HistoryDBConfig.StateDatabase == db.PebbleDB {
-		dbType = db.PebbleDB
-	}
-
 	// Initialize the history database (index for history of values by key)
 	historyDBConfig := &history.HistoryDBConfig{
-		DBType: dbType,
+		DBType: p.dbType,
 		DBPath: HistoryDBPath(p.initializer.Config.RootFSPath),
 	}
 	historydbProvider, err := history.NewDBProvider(historyDBConfig)
@@ -211,15 +199,11 @@ func (p *Provider) initHistoryDBProvider() error {
 }
 
 func (p *Provider) initConfigHistoryManager() error {
-	dbType := db.GoLevelDB
-	if p.initializer.Config.HistoryDBConfig.StateDatabase == db.PebbleDB {
-		dbType = db.PebbleDB
-	}
 	var err error
 	configHistoryMgr, err := confighistory.NewMgr(
 		ConfigHistoryDBPath(p.initializer.Config.RootFSPath),
 		p.initializer.DeployedChaincodeInfoProvider,
-		dbType,
+		p.dbType,
 	)
 	if err != nil {
 		return err
@@ -245,14 +229,10 @@ func (p *Provider) initStateListeners() {
 }
 
 func (p *Provider) initStateDBProvider() error {
-	dbType := db.GoLevelDB
-	if p.initializer.Config.StateDBConfig.StateDatabase == db.PebbleDB {
-		dbType = db.PebbleDB
-	}
 	var err error
 	p.bookkeepingProvider, err = bookkeeping.NewProvider(
 		BookkeeperDBPath(p.initializer.Config.RootFSPath),
-		dbType,
+		p.dbType,
 	)
 	if err != nil {
 		return err
@@ -777,14 +757,4 @@ func metadataKey(ledgerID string) []byte {
 
 func ledgerIDFromMetadataKey(key []byte) string {
 	return string(key[len(metadataKeyPrefix):])
-}
-
-// newFileLock creates a FileLock based on the dbType.
-func newFileLock(filePath, dbType string) (db.FileLock, error) {
-	switch dbType {
-	case db.PebbleDB:
-		return pebblehelper.NewFileLock(filePath), nil
-	default:
-		return leveldbhelper.NewFileLock(filePath), nil
-	}
 }

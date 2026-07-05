@@ -16,7 +16,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
-	"github.com/hyperledger/fabric/common/ledger/util/db"
+	dbpkg "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/chaincode/implicitcollection"
 	"github.com/hyperledger/fabric/core/ledger/confighistory/confighistorytest"
@@ -59,6 +59,7 @@ func TestSnapshotImporter(t *testing.T) {
 			newMockMembershipProvider(myMSPID),
 			configHistoryMgr.GetRetriever(ledgerID),
 			testDir,
+			dbpkg.GoLevelDB,
 		)
 		require.NoError(t, err)
 
@@ -448,6 +449,7 @@ func TestSnapshotImporterErrorPropagation(t *testing.T) {
 			newMockMembershipProvider(myMSPID),
 			configHistoryMgr.GetRetriever(ledgerID),
 			testDir,
+			dbpkg.GoLevelDB,
 		)
 		require.NoError(t, err)
 		return snapshotDataImporter, configHistoryMgr
@@ -797,7 +799,7 @@ func (e eligibilityVal) sameAs(p *peer.CollectionPolicyConfig) bool {
 }
 
 func TestDBUpdates(t *testing.T) {
-	setup := func() db.Provider {
+	setup := func() dbpkg.Provider {
 		testDir := t.TempDir()
 
 		p, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: testDir})
@@ -917,7 +919,7 @@ func TestDBUpdates(t *testing.T) {
 
 type dbEntriesVerifier struct {
 	t  *testing.T
-	db db.DBHandle
+	db dbpkg.DBHandle
 }
 
 func (v *dbEntriesVerifier) verifyElgMissingDataEntry(key *missingDataKey, expectedVal *bitset.BitSet) {
@@ -1076,7 +1078,7 @@ func TestSnapshotRowsSorter(t *testing.T) {
 		t.Run(fmt.Sprintf("testcase-%d", i), func(t *testing.T) {
 			dir := t.TempDir()
 
-			sorter, err := newSnapshotRowsSorter(dir)
+			sorter, err := newSnapshotRowsSorter(dir, dbpkg.GoLevelDB)
 			require.NoError(t, err)
 
 			for _, row := range testCase.inputRows {
@@ -1113,7 +1115,7 @@ func TestSnapshotRowsSorter(t *testing.T) {
 func TestSnapshotRowsSorterCleanup(t *testing.T) {
 	dir := t.TempDir()
 
-	sorter, err := newSnapshotRowsSorter(dir)
+	sorter, err := newSnapshotRowsSorter(dir, dbpkg.GoLevelDB)
 	require.NoError(t, err)
 	empty, err := fileutil.DirEmpty(dir)
 	require.NoError(t, err)
