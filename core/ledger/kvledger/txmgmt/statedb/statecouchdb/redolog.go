@@ -11,8 +11,7 @@ import (
 	"encoding/gob"
 
 	db "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 )
@@ -33,14 +32,7 @@ type redoRecord struct {
 }
 
 func newRedoLoggerProvider(dirPath, dbType string) (*redoLoggerProvider, error) {
-	var provider db.Provider
-	var err error
-	switch dbType {
-	case db.PebbleDB:
-		provider, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: dirPath})
-	default:
-		provider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dirPath})
-	}
+	provider, err := dbfactory.NewProvider(dbType, dirPath, "")
 	if err != nil {
 		return nil, err
 	}

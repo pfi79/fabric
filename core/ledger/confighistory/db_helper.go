@@ -12,8 +12,7 @@ import (
 	"math"
 
 	dbpkg "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/pkg/errors"
 )
 
@@ -47,14 +46,7 @@ type batch struct {
 
 func newDBProvider(dbPath, dbType string) (*dbProvider, error) {
 	logger.Debugf("Opening db for config history: db path = %s, db type = %s", dbPath, dbType)
-	var p dbpkg.Provider
-	var err error
-	switch dbType {
-	case dbpkg.PebbleDB:
-		p, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: dbPath})
-	default:
-		p, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: dbPath})
-	}
+	p, err := dbfactory.NewProvider(dbType, dbPath, "")
 	if err != nil {
 		return nil, err
 	}

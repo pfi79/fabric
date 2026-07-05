@@ -4,7 +4,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package statepebbledb
+package statekvdb
 
 import (
 	"bytes"
@@ -12,13 +12,13 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
 	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"github.com/pkg/errors"
 )
 
-var logger = flogging.MustGetLogger("statepebbledb")
+var logger = flogging.MustGetLogger("statekvdb")
 
 var (
 	dataKeyPrefix          = []byte{'d'}
@@ -31,18 +31,13 @@ var (
 
 // VersionedDBProvider implements interface VersionedDBProvider
 type VersionedDBProvider struct {
-	dbProvider *pebblehelper.PebbleProvider
+	dbProvider db.Provider
 }
 
 // NewVersionedDBProvider instantiates VersionedDBProvider
-func NewVersionedDBProvider(dbPath string) (*VersionedDBProvider, error) {
+func NewVersionedDBProvider(dbPath string, dbType string) (*VersionedDBProvider, error) {
 	logger.Debugf("constructing VersionedDBProvider dbPath=%s", dbPath)
-	dbProvider, err := pebblehelper.NewProvider(
-		&pebblehelper.Conf{
-			DBPath:         dbPath,
-			ExpectedFormat: dataformat.CurrentFormat,
-		},
-	)
+	dbProvider, err := dbfactory.NewProvider(dbType, dbPath, dataformat.CurrentFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +69,7 @@ func (provider *VersionedDBProvider) Close() {
 	provider.dbProvider.Close()
 }
 
-// Drop drops channel-specific data from the state pebble db.
+// Drop drops channel-specific data from the state leveldb.
 // It is not an error if a database does not exist.
 func (provider *VersionedDBProvider) Drop(dbName string) error {
 	return provider.dbProvider.Drop(dbName)
@@ -174,12 +169,12 @@ func (vdb *versionedDB) GetStateRangeScanIteratorWithPagination(namespace string
 
 // ExecuteQuery implements method in VersionedDB interface
 func (vdb *versionedDB) ExecuteQuery(namespace, query string) (statedb.ResultsIterator, error) {
-	return nil, errors.New("ExecuteQuery not supported for pebbledb")
+	return nil, errors.New("ExecuteQuery not supported for leveldb")
 }
 
 // ExecuteQueryWithPagination implements method in VersionedDB interface
 func (vdb *versionedDB) ExecuteQueryWithPagination(namespace, query, bookmark string, pageSize int32) (statedb.QueryResultsIterator, error) {
-	return nil, errors.New("ExecuteQueryWithMetadata not supported for pebbledb")
+	return nil, errors.New("ExecuteQueryWithMetadata not supported for leveldb")
 }
 
 // ApplyUpdates implements method in VersionedDB interface
@@ -203,9 +198,14 @@ func (vdb *versionedDB) ApplyUpdates(batch *statedb.UpdateBatch, height *version
 			}
 		}
 	}
+	// Record a savepoint at a given height
+	// If a given height is nil, it denotes that we are committing pvt data of old blocks.
+	// In this case, we should not store a savepoint for recovery. The lastUpdatedOldBlockList
+	// in the pvtstore acts as a savepoint for pvt data.
 	if height != nil {
 		dbBatch.Put(savePointKey, height.ToBytes())
 	}
+	// Setting snyc to true as a precaution, false may be an ok optimization after further testing.
 	return vdb.db.WriteBatch(dbBatch, true)
 }
 
@@ -225,12 +225,18 @@ func (vdb *versionedDB) GetLatestSavePoint() (*version.Height, error) {
 	return version, nil
 }
 
-// GetFullScanIterator implements method in VersionedDB interface
+// GetFullScanIterator implements method in VersionedDB interface. 	This function returns a
+// FullScanIterator that can be used to iterate over entire data in the statedb for a channel.
+// `skipNamespace` parameter can be used to control if the consumer wants the FullScanIterator
+// to skip one or more namespaces from the returned results. The intended use of this iterator
+// is to generate the snapshot files for the statekvdb
 func (vdb *versionedDB) GetFullScanIterator(skipNamespace func(string) bool) (statedb.FullScanIterator, error) {
 	return newFullDBScanner(vdb.db, skipNamespace)
 }
 
-// importState implements method in VersionedDB interface
+// importState implements method in VersionedDB interface. The function is expected to be used
+// for importing the state from a previously snapshotted state. The parameter itr provides access to
+// the snapshotted state.
 func (vdb *versionedDB) importState(itr statedb.FullScanIterator, savepoint *version.Height) error {
 	if itr == nil {
 		return vdb.db.Put(savePointKey, savepoint.ToBytes(), true)
@@ -360,13 +366,11 @@ func newFullDBScanner(db db.DBHandle, skipNamespace func(namespace string) bool)
 
 // Next returns the key-values in the lexical order of <Namespace, key>
 func (s *fullDBScanner) Next() (*statedb.VersionedKV, error) {
-	if s.dbItr.Next() {
+	for s.dbItr.Next() {
 		ns, key := decodeDataKey(s.dbItr.Key())
-		for s.toSkip(ns) {
-			if !s.dbItr.Seek(dataKeyStarterForNextNamespace(ns)) {
-				return nil, nil
-			}
-			ns, key = decodeDataKey(s.dbItr.Key())
+		compositeKey := &statedb.CompositeKey{
+			Namespace: ns,
+			Key:       key,
 		}
 
 		versionedVal, err := decodeValue(s.dbItr.Value())
@@ -374,15 +378,18 @@ func (s *fullDBScanner) Next() (*statedb.VersionedKV, error) {
 			return nil, err
 		}
 
-		return &statedb.VersionedKV{
-			CompositeKey: &statedb.CompositeKey{
-				Namespace: ns,
-				Key:       key,
-			},
-			VersionedValue: versionedVal,
-		}, nil
+		switch {
+		case !s.toSkip(ns):
+			return &statedb.VersionedKV{
+				CompositeKey:   compositeKey,
+				VersionedValue: versionedVal,
+			}, nil
+		default:
+			s.dbItr.Seek(dataKeyStarterForNextNamespace(ns))
+			s.dbItr.Prev()
+		}
 	}
-	return nil, errors.Wrap(s.dbItr.Error(), "internal pebble error while retrieving data from db iterator")
+	return nil, errors.Wrap(s.dbItr.Error(), "internal leveldb error while retrieving data from db iterator")
 }
 
 func (s *fullDBScanner) Close() {

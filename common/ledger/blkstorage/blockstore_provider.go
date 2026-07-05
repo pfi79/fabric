@@ -14,8 +14,7 @@ import (
 	"github.com/hyperledger/fabric-lib-go/common/metrics"
 	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/internal/fileutil"
 	"github.com/pkg/errors"
 )
@@ -61,24 +60,7 @@ type BlockStoreProvider struct {
 // NewProvider constructs a filesystem based block store provider.
 // dbType is one of "goleveldb" or "pebbledb".
 func NewProvider(conf *Conf, indexConfig *IndexConfig, metricsProvider metrics.Provider, dbType string) (*BlockStoreProvider, error) {
-	var (
-		prov db.Provider
-		err  error
-	)
-	switch dbType {
-	case db.PebbleDB:
-		pbConf := &pebblehelper.Conf{
-			DBPath:         conf.getIndexDir(),
-			ExpectedFormat: dataFormatVersion(indexConfig),
-		}
-		prov, err = pebblehelper.NewProvider(pbConf)
-	default:
-		dbConf := &leveldbhelper.Conf{
-			DBPath:         conf.getIndexDir(),
-			ExpectedFormat: dataFormatVersion(indexConfig),
-		}
-		prov, err = leveldbhelper.NewProvider(dbConf)
-	}
+	prov, err := dbfactory.NewProvider(dbType, conf.getIndexDir(), dataFormatVersion(indexConfig))
 	if err != nil {
 		return nil, err
 	}

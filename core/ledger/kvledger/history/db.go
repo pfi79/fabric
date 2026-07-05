@@ -12,8 +12,7 @@ import (
 	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
@@ -43,26 +42,7 @@ type DBProvider struct {
 // NewDBProvider instantiates DBProvider
 func NewDBProvider(conf *HistoryDBConfig) (*DBProvider, error) {
 	logger.Debugf("constructing HistoryDBProvider dbPath=%s", conf.DBPath)
-	var (
-		dbp db.Provider
-		err error
-	)
-
-	if conf.DBType == ledger.PebbleDB {
-		dbp, err = pebblehelper.NewProvider(
-			&pebblehelper.Conf{
-				DBPath:         conf.DBPath,
-				ExpectedFormat: dataformat.CurrentFormat,
-			},
-		)
-	} else {
-		dbp, err = leveldbhelper.NewProvider(
-			&leveldbhelper.Conf{
-				DBPath:         conf.DBPath,
-				ExpectedFormat: dataformat.CurrentFormat,
-			},
-		)
-	}
+	dbp, err := dbfactory.NewProvider(conf.DBType, conf.DBPath, dataformat.CurrentFormat)
 	if err != nil {
 		return nil, err
 	}

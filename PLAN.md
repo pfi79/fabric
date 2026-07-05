@@ -346,7 +346,7 @@ func New(directory string, dbType string, metricsProvider metrics.Provider) (blo
 
 ---
 
-### Этап 10: Переход оставшихся хранилищ на конфигурируемый тип БД
+### Этап 10: Переход оставшихся хранилищ на конфигурируемый тип БД [Done]
 
 Все потребители ниже уже переведены на интерфейсы `db.*` (Этап 9), но **всегда
 создают GoLevelDB**. Изменения: добавить параметр `dbType` в конструктор /
@@ -461,7 +461,7 @@ func newFileLock(path, dbType string) (FileLock, error) {
 - `pebblehelper.NewFileLock(path)` — новая имплементация через
   `syscall.Flock` на пустой файл (как в `pebblehelper/file_lock.go`).
 
-#### 10.6 Вспомогательные утилиты (upgrade/reset/rebuild/rollback)
+#### 10.6 Вспомогательные утилиты (upgrade/reset/rebuild/rollback) [Done]
 
 **Файлы в `core/ledger/kvledger/`:**
 

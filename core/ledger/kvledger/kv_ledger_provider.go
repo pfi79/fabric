@@ -17,8 +17,6 @@ import (
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
 	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
@@ -169,7 +167,7 @@ func (p *Provider) initPvtDataStoreProvider() error {
 	if err != nil {
 		return err
 	}
-	if err = pvtdatastorage.CheckAndConstructHashedIndex(privateDataConfig.StorePath, ledgerIDs); err != nil {
+	if err = pvtdatastorage.CheckAndConstructHashedIndex(privateDataConfig.StorePath, ledgerIDs, privateDataConfig.DBType); err != nil {
 		return err
 	}
 	pvtdataStoreProvider, err := pvtdatastorage.NewProvider(privateDataConfig)
@@ -521,13 +519,7 @@ type idStore struct {
 }
 
 func openIDStore(path, dbType string) (s *idStore, e error) {
-	var d db.DB
-	switch dbType {
-	case db.PebbleDB:
-		d = pebblehelper.CreateDB(&pebblehelper.Conf{DBPath: path})
-	default:
-		d = leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: path})
-	}
+	d := dbfactory.CreateDB(dbType, path, "")
 	d.Open()
 	defer func() {
 		if e != nil {

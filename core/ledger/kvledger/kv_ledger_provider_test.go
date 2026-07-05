@@ -20,10 +20,11 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/queryresult"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	configtxtest "github.com/hyperledger/fabric/common/configtx/test"
+	dbpkg "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/dataformat"
 	"github.com/hyperledger/fabric/common/ledger/testutil"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/msgs"
@@ -200,7 +201,7 @@ func TestUpgradeIDStoreFormatDBError(t *testing.T) {
 func TestCheckUpgradeEligibilityV1x(t *testing.T) {
 	conf := testConfig(t)
 	dbPath := LedgerProviderPath(conf.RootFSPath)
-	db := leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: dbPath})
+	db := dbfactory.CreateDB(dbpkg.GoLevelDB, dbPath, "")
 	idStore := &idStore{db, dbPath}
 	db.Open()
 	defer db.Close()
@@ -217,7 +218,7 @@ func TestCheckUpgradeEligibilityV1x(t *testing.T) {
 func TestCheckUpgradeEligibilityCurrentVersion(t *testing.T) {
 	conf := testConfig(t)
 	dbPath := LedgerProviderPath(conf.RootFSPath)
-	db := leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: dbPath})
+	db := dbfactory.CreateDB(dbpkg.GoLevelDB, dbPath, "")
 	idStore := &idStore{db, dbPath}
 	db.Open()
 	defer db.Close()
@@ -233,7 +234,7 @@ func TestCheckUpgradeEligibilityCurrentVersion(t *testing.T) {
 func TestCheckUpgradeEligibilityBadFormat(t *testing.T) {
 	conf := testConfig(t)
 	dbPath := LedgerProviderPath(conf.RootFSPath)
-	db := leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: dbPath})
+	db := dbfactory.CreateDB(dbpkg.GoLevelDB, dbPath, "")
 	idStore := &idStore{db, dbPath}
 	db.Open()
 	defer db.Close()
@@ -254,7 +255,7 @@ func TestCheckUpgradeEligibilityBadFormat(t *testing.T) {
 func TestCheckUpgradeEligibilityEmptyDB(t *testing.T) {
 	conf := testConfig(t)
 	dbPath := LedgerProviderPath(conf.RootFSPath)
-	db := leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: dbPath})
+	db := dbfactory.CreateDB(dbpkg.GoLevelDB, dbPath, "")
 	idStore := &idStore{db, dbPath}
 	db.Open()
 	defer db.Close()

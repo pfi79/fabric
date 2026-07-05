@@ -9,7 +9,6 @@ package kvledger
 import (
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
 	"github.com/pkg/errors"
@@ -32,7 +31,7 @@ func UpgradeDBs(config *ledger.Config) error {
 	logger.Infof("Ledger data folder from config = [%s]", rootFSPath)
 
 	dbPath := LedgerProviderPath(rootFSPath)
-	db := leveldbhelper.CreateDB(&leveldbhelper.Conf{DBPath: dbPath})
+	db := dbfactory.CreateDB(config.StateDBConfig.StateDatabase, dbPath, "")
 	db.Open()
 	defer db.Close()
 	idStore := &idStore{db, dbPath}

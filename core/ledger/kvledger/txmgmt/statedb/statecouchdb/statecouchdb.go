@@ -932,7 +932,7 @@ func (vdb *VersionedDB) GetFullScanIterator(skipNamespace func(string) bool) (st
 
 	// if namespacesToScan is empty, we can return early with a nil FullScanIterator. However,
 	// the implementation of this method needs be consistent with the same method implemented in
-	// the stateleveldb pkg. Hence, we don't return a nil FullScanIterator by checking the length
+	// the statekvdb pkg. Hence, we don't return a nil FullScanIterator by checking the length
 	// of the namespacesToScan.
 
 	dbsToScan := []*namespaceDB{}

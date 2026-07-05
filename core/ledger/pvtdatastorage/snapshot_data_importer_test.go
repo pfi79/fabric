@@ -17,7 +17,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	dbpkg "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/chaincode/implicitcollection"
 	"github.com/hyperledger/fabric/core/ledger/confighistory/confighistorytest"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
@@ -43,7 +43,7 @@ func TestSnapshotImporter(t *testing.T) {
 
 	setup := func() (*SnapshotDataImporter, *confighistorytest.Mgr, *dbEntriesVerifier) {
 		testDir := t.TempDir()
-		dbProvider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: testDir})
+		dbProvider, err := dbfactory.NewProvider(dbpkg.GoLevelDB, testDir, "")
 		require.NoError(t, err)
 		t.Cleanup(func() { dbProvider.Close() })
 
@@ -433,7 +433,7 @@ func TestSnapshotImporterErrorPropagation(t *testing.T) {
 
 	setup := func() (*SnapshotDataImporter, *confighistorytest.Mgr) {
 		testDir := t.TempDir()
-		dbProvider, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: testDir})
+		dbProvider, err := dbfactory.NewProvider(dbpkg.GoLevelDB, testDir, "")
 		require.NoError(t, err)
 		t.Cleanup(func() { dbProvider.Close() })
 
@@ -802,7 +802,7 @@ func TestDBUpdates(t *testing.T) {
 	setup := func() dbpkg.Provider {
 		testDir := t.TempDir()
 
-		p, err := leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: testDir})
+		p, err := dbfactory.NewProvider(dbpkg.GoLevelDB, testDir, "")
 		require.NoError(t, err)
 		t.Cleanup(func() { p.Close() })
 		return p

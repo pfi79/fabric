@@ -315,11 +315,8 @@ func TestRetrieveDataFormatInfo(t *testing.T) {
 	require.NoError(t, err)
 	provider.Close()
 
-	info, err := RetrieveDataFormatInfo(path)
+	fv, isDBEmpty, err := RetrieveDataFormatInfo(path)
 	require.NoError(t, err)
-	require.Equal(t, "100", info.FormatVerison)
-	require.False(t, info.IsDBEmpty)
-
-	db2 := info.IsDBEmpty
-	require.False(t, db2)
+	require.False(t, isDBEmpty)
+	require.Equal(t, "100", fv)
 }

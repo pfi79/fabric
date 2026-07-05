@@ -20,8 +20,7 @@ import (
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
-	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/stateleveldb"
-	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statepebbledb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statekvdb"
 	"github.com/hyperledger/fabric/core/ledger/util"
 	"github.com/pkg/errors"
 )
@@ -67,12 +66,8 @@ func NewDBProvider(
 		if vdbProvider, err = statecouchdb.NewVersionedDBProvider(stateDBConf.CouchDB, metricsProvider, sysNamespaces); err != nil {
 			return nil, err
 		}
-	} else if stateDBConf != nil && stateDBConf.StateDatabase == ledger.PebbleDB {
-		if vdbProvider, err = statepebbledb.NewVersionedDBProvider(stateDBConf.LevelDBPath); err != nil {
-			return nil, err
-		}
 	} else {
-		if vdbProvider, err = stateleveldb.NewVersionedDBProvider(stateDBConf.LevelDBPath); err != nil {
+		if vdbProvider, err = statekvdb.NewVersionedDBProvider(stateDBConf.LevelDBPath, stateDBConf.StateDatabase); err != nil {
 			return nil, err
 		}
 	}

@@ -13,18 +13,18 @@ import (
 )
 
 // CreateDB creates a database of the specified type.
-func CreateDB(dbType string, dbPath string, expectedFormat string) (db.DB, error) {
+func CreateDB(dbType string, dbPath string, expectedFormat string) db.DB {
 	switch dbType {
 	case db.PebbleDB:
 		return pebblehelper.CreateDB(&pebblehelper.Conf{
 			DBPath:         dbPath,
 			ExpectedFormat: expectedFormat,
-		}), nil
+		})
 	default:
 		return leveldbhelper.CreateDB(&leveldbhelper.Conf{
 			DBPath:         dbPath,
 			ExpectedFormat: expectedFormat,
-		}), nil
+		})
 	}
 }
 
@@ -51,5 +51,14 @@ func NewFileLock(dbType, filePath string) db.FileLock {
 		return pebblehelper.NewFileLock(filePath)
 	default:
 		return leveldbhelper.NewFileLock(filePath)
+	}
+}
+
+func RetrieveDataFormatInfo(dbType, dbPath string) (formatVerison string, isDBEmpty bool, err error) {
+	switch dbType {
+	case db.PebbleDB:
+		return pebblehelper.RetrieveDataFormatInfo(dbPath)
+	default:
+		return leveldbhelper.RetrieveDataFormatInfo(dbPath)
 	}
 }

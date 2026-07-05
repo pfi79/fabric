@@ -15,8 +15,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/transientstore"
 	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/pkg/errors"
@@ -115,14 +113,7 @@ func newStoreProvider(providerPath string, fileLock db.FileLock, dbType string) 
 		panic("newStoreProvider invoked without holding 'fileLock'")
 	}
 
-	var dbProvider db.Provider
-	var err error
-	switch dbType {
-	case db.PebbleDB:
-		dbProvider, err = pebblehelper.NewProvider(&pebblehelper.Conf{DBPath: providerPath})
-	default:
-		dbProvider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{DBPath: providerPath})
-	}
+	dbProvider, err := dbfactory.NewProvider(dbType, providerPath, "")
 	if err != nil {
 		return nil, errors.WithMessage(err, "could not open dbprovider")
 	}

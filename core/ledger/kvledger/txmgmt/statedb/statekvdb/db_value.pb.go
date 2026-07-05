@@ -7,9 +7,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.35.1
-// source: db_value_leveldb.proto
+// source: db_value.proto
 
-package stateleveldb
+package statekvdb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -37,7 +37,7 @@ type DBValue struct {
 
 func (x *DBValue) Reset() {
 	*x = DBValue{}
-	mi := &file_db_value_leveldb_proto_msgTypes[0]
+	mi := &file_db_value_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +49,7 @@ func (x *DBValue) String() string {
 func (*DBValue) ProtoMessage() {}
 
 func (x *DBValue) ProtoReflect() protoreflect.Message {
-	mi := &file_db_value_leveldb_proto_msgTypes[0]
+	mi := &file_db_value_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *DBValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DBValue.ProtoReflect.Descriptor instead.
 func (*DBValue) Descriptor() ([]byte, []int) {
-	return file_db_value_leveldb_proto_rawDescGZIP(), []int{0}
+	return file_db_value_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *DBValue) GetVersion() []byte {
@@ -86,33 +86,33 @@ func (x *DBValue) GetMetadata() []byte {
 	return nil
 }
 
-var File_db_value_leveldb_proto protoreflect.FileDescriptor
+var File_db_value_proto protoreflect.FileDescriptor
 
-const file_db_value_leveldb_proto_rawDesc = "" +
+const file_db_value_proto_rawDesc = "" +
 	"\n" +
-	"\x16db_value_leveldb.proto\x12\fstateleveldb\"U\n" +
+	"\x0edb_value.proto\x12\tstatekvdb\"U\n" +
 	"\aDBValue\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\fR\aversion\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value\x12\x1a\n" +
-	"\bmetadata\x18\x03 \x01(\fR\bmetadataBPZNgithub.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/stateleveldbb\x06proto3"
+	"\bmetadata\x18\x03 \x01(\fR\bmetadataBMZKgithub.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statekvdbb\x06proto3"
 
 var (
-	file_db_value_leveldb_proto_rawDescOnce sync.Once
-	file_db_value_leveldb_proto_rawDescData []byte
+	file_db_value_proto_rawDescOnce sync.Once
+	file_db_value_proto_rawDescData []byte
 )
 
-func file_db_value_leveldb_proto_rawDescGZIP() []byte {
-	file_db_value_leveldb_proto_rawDescOnce.Do(func() {
-		file_db_value_leveldb_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_db_value_leveldb_proto_rawDesc), len(file_db_value_leveldb_proto_rawDesc)))
+func file_db_value_proto_rawDescGZIP() []byte {
+	file_db_value_proto_rawDescOnce.Do(func() {
+		file_db_value_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_db_value_proto_rawDesc), len(file_db_value_proto_rawDesc)))
 	})
-	return file_db_value_leveldb_proto_rawDescData
+	return file_db_value_proto_rawDescData
 }
 
-var file_db_value_leveldb_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_db_value_leveldb_proto_goTypes = []any{
-	(*DBValue)(nil), // 0: stateleveldb.DBValue
+var file_db_value_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_db_value_proto_goTypes = []any{
+	(*DBValue)(nil), // 0: statekvdb.DBValue
 }
-var file_db_value_leveldb_proto_depIdxs = []int32{
+var file_db_value_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -120,26 +120,26 @@ var file_db_value_leveldb_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_db_value_leveldb_proto_init() }
-func file_db_value_leveldb_proto_init() {
-	if File_db_value_leveldb_proto != nil {
+func init() { file_db_value_proto_init() }
+func file_db_value_proto_init() {
+	if File_db_value_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_db_value_leveldb_proto_rawDesc), len(file_db_value_leveldb_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_db_value_proto_rawDesc), len(file_db_value_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_db_value_leveldb_proto_goTypes,
-		DependencyIndexes: file_db_value_leveldb_proto_depIdxs,
-		MessageInfos:      file_db_value_leveldb_proto_msgTypes,
+		GoTypes:           file_db_value_proto_goTypes,
+		DependencyIndexes: file_db_value_proto_depIdxs,
+		MessageInfos:      file_db_value_proto_msgTypes,
 	}.Build()
-	File_db_value_leveldb_proto = out.File
-	file_db_value_leveldb_proto_goTypes = nil
-	file_db_value_leveldb_proto_depIdxs = nil
+	File_db_value_proto = out.File
+	file_db_value_proto_goTypes = nil
+	file_db_value_proto_depIdxs = nil
 }

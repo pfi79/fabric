@@ -461,16 +461,10 @@ func TestRetrieveDataFormatInfo(t *testing.T) {
 		defer cleanup()
 
 		prov.Close()
-		info, err := RetrieveDataFormatInfo(testDBPath)
+		fv, isDBEmpty, err := RetrieveDataFormatInfo(testDBPath)
 		require.NoError(t, err)
-		require.Equal(
-			t,
-			&DataFormatInfo{
-				FormatVerison: "",
-				IsDBEmpty:     true,
-			},
-			info,
-		)
+		require.True(t, isDBEmpty)
+		require.Equal(t, "", fv)
 	})
 
 	t.Run("db provider with existing data", func(t *testing.T) {
@@ -481,16 +475,10 @@ func TestRetrieveDataFormatInfo(t *testing.T) {
 		require.NoError(t, db.Put([]byte("k"), []byte("v"), true))
 		prov.Close()
 
-		info, err := RetrieveDataFormatInfo(testDBPath)
+		fv, isDBEmpty, err := RetrieveDataFormatInfo(testDBPath)
 		require.NoError(t, err)
-		require.Equal(
-			t,
-			&DataFormatInfo{
-				FormatVerison: "",
-				IsDBEmpty:     false,
-			},
-			info,
-		)
+		require.False(t, isDBEmpty)
+		require.Equal(t, "", fv)
 	})
 
 	t.Run("db provider with existing data and version", func(t *testing.T) {
@@ -501,16 +489,10 @@ func TestRetrieveDataFormatInfo(t *testing.T) {
 		db := prov.GetDBHandle("dummy")
 		require.NoError(t, db.Put([]byte("k"), []byte("v"), true))
 		prov.Close()
-		info, err := RetrieveDataFormatInfo(testDBPath)
+		fv, isDBEmpty, err := RetrieveDataFormatInfo(testDBPath)
 		require.NoError(t, err)
-		require.Equal(
-			t,
-			&DataFormatInfo{
-				FormatVerison: "2.6",
-				IsDBEmpty:     false,
-			},
-			info,
-		)
+		require.False(t, isDBEmpty)
+		require.Equal(t, "2.6", fv)
 	})
 }
 

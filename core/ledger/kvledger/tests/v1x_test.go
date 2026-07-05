@@ -274,7 +274,7 @@ func TestV13WithStateCouchdb(t *testing.T) {
 }
 
 // TestInitLedgerPanicWithV11Data tests init ledger panic cases caused by ledger dbs in old formats.
-// It tests stateleveldb.
+// It tests statekvdb.
 func TestInitLedgerPanicWithV11Data(t *testing.T) {
 	env := newEnv(t)
 	defer env.cleanup()
@@ -339,7 +339,7 @@ func testInitLedgerPanic(t *testing.T, env *env, ledgerFSRoot string, couchdbCon
 	require.NoError(t, os.RemoveAll(historyDBPath))
 
 	if couchdbConfig == nil {
-		t.Logf("verifying that a panic occurs because stateleveldb has old format and then drop the statedb to proceed")
+		t.Logf("verifying that a panic occurs because statekvdb has old format and then drop the statedb to proceed")
 		stateLevelDBPath := kvledger.StateDBPath(ledgerFSRoot)
 		require.PanicsWithValue(
 			t,

@@ -58,21 +58,15 @@ type Provider struct {
 
 var _ db.Provider = (*Provider)(nil)
 
-// DataFormatInfo contains the information about the version of the data format
-type DataFormatInfo struct {
-	FormatVerison string // version of the data format
-	IsDBEmpty     bool   // set to true if the db does not contain any data
-}
-
-// RetrieveDataFormatInfo retrieves the DataFormatInfo for the db at the supplied `dbPath`
-func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
+// RetrieveDataFormatInfo retrieves the FormatVerison and IsDBEmpty for the db at the supplied `dbPath`
+func RetrieveDataFormatInfo(dbPath string) (formatVerison string, isDBEmpty bool, err error) {
 	db := CreateDB(&Conf{DBPath: dbPath})
 	db.Open()
 	defer db.Close()
 
 	dbEmpty, err := db.IsEmpty()
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 
 	db.dbName = internalDBName
@@ -83,13 +77,10 @@ func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
 
 	formatVersion, err := internalDB.Get(formatVersionKey)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 
-	return &DataFormatInfo{
-		IsDBEmpty:     dbEmpty,
-		FormatVerison: string(formatVersion),
-	}, nil
+	return string(formatVersion), dbEmpty, nil
 }
 
 // NewProvider constructs a Provider

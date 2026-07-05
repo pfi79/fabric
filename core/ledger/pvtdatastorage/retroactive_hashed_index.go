@@ -11,7 +11,7 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	db "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
 	"github.com/hyperledger/fabric/core/ledger/util"
@@ -24,35 +24,30 @@ const (
 	maxUpgradeBatchSize = 4 * 1024 * 1024 // 4 MB
 )
 
-func CheckAndConstructHashedIndex(storePath string, ledgerIDs []string) error {
-	info, err := leveldbhelper.RetrieveDataFormatInfo(storePath)
+func CheckAndConstructHashedIndex(storePath string, ledgerIDs []string, dbType string) error {
+	formatVerison, isDBEmpty, err := dbfactory.RetrieveDataFormatInfo(dbType, storePath)
 	if err != nil {
 		return err
 	}
 
-	if info.IsDBEmpty || info.FormatVerison == currentDataVersion {
+	if isDBEmpty || formatVerison == currentDataVersion {
 		return nil
 	}
 
-	if info.FormatVerison == previousDataVersion {
-		if err := constructHashedIndex(storePath, ledgerIDs); err != nil {
+	if formatVerison == previousDataVersion {
+		if err = constructHashedIndex(dbType, storePath, ledgerIDs); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	return errors.Errorf("unexpected data version - cannot upgrade data format for pvtdatastore from %s to %s", info.FormatVerison, currentDataVersion)
+	return errors.Errorf("unexpected data version - cannot upgrade data format for pvtdatastore from %s to %s", formatVerison, currentDataVersion)
 }
 
 // constructHashedIndex creates the HashedIndex entries for the private data keys and at the end sets the
 // data format version to the current version (2.5)
-func constructHashedIndex(storePath string, ledgerIDs []string) error {
-	p, err := leveldbhelper.NewProvider(
-		&leveldbhelper.Conf{
-			DBPath:         storePath,
-			ExpectedFormat: previousDataVersion,
-		},
-	)
+func constructHashedIndex(dbType string, storePath string, ledgerIDs []string) error {
+	p, err := dbfactory.NewProvider(dbType, storePath, previousDataVersion)
 	if err != nil {
 		return err
 	}
@@ -61,7 +56,7 @@ func constructHashedIndex(storePath string, ledgerIDs []string) error {
 
 	for _, l := range ledgerIDs {
 		db := p.GetDBHandle(l)
-		if err := constructHashedIndexFor(l, db); err != nil {
+		if err = constructHashedIndexFor(l, db); err != nil {
 			return err
 		}
 	}

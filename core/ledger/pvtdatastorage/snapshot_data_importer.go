@@ -14,8 +14,7 @@ import (
 	"github.com/bits-and-blooms/bitset"
 	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/util"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/chaincode/implicitcollection"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
@@ -402,17 +401,7 @@ func newSnapshotRowsSorter(tempDirRoot, dbType string) (*snapshotRowsSorter, err
 		return nil, errors.Wrap(err, "error while creating temp dir for sorting rows")
 	}
 
-	var dbProvider db.Provider
-	switch dbType {
-	case db.PebbleDB:
-		dbProvider, err = pebblehelper.NewProvider(&pebblehelper.Conf{
-			DBPath: tempDir,
-		})
-	default:
-		dbProvider, err = leveldbhelper.NewProvider(&leveldbhelper.Conf{
-			DBPath: tempDir,
-		})
-	}
+	dbProvider, err := dbfactory.NewProvider(dbType, tempDir, "")
 	if err != nil {
 		return nil, err
 	}

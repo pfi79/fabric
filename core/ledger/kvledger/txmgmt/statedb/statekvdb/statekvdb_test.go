@@ -4,7 +4,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package statepebbledb
+package statekvdb
 
 import (
 	"errors"
@@ -43,7 +43,7 @@ func TestIterator(t *testing.T) {
 		require.NoError(t, err)
 		env.DBProvider.Close()
 		itr, err := db.GetStateRangeScanIterator("ns1", "", "")
-		require.ErrorContains(t, err, "pebble db at path")
+		require.EqualError(t, err, "internal leveldb error while obtaining db iterator: leveldb: closed")
 		require.Nil(t, itr)
 	})
 }
@@ -61,8 +61,8 @@ func testDataKeyEncoding(t *testing.T, dbName string, ns string, key string) {
 	require.Equal(t, key, key1)
 }
 
-// TestQueryOnPebbleDB tests queries on pebbleDB.
-func TestQueryOnPebbleDB(t *testing.T) {
+// TestQueryOnLevelDB tests queries on levelDB.
+func TestQueryOnLevelDB(t *testing.T) {
 	env := NewTestVDBEnv(t)
 	defer env.Cleanup()
 	db, err := env.DBProvider.GetDBHandle("testquery", nil)
@@ -76,8 +76,11 @@ func TestQueryOnPebbleDB(t *testing.T) {
 	savePoint := version.NewHeight(2, 22)
 	require.NoError(t, db.ApplyUpdates(batch, savePoint))
 
+	// query for owner=jerry, use namespace "ns1"
+	// As queries are not supported in levelDB, call to ExecuteQuery()
+	// should return a error message
 	itr, err := db.ExecuteQuery("ns1", `{"selector":{"owner":"jerry"}}`)
-	require.Error(t, err, "ExecuteQuery not supported for pebbledb")
+	require.Error(t, err, "ExecuteQuery not supported for leveldb")
 	require.Nil(t, itr)
 }
 
@@ -103,7 +106,8 @@ func TestUtilityFunctions(t *testing.T) {
 	require.True(t, env.DBProvider.BytesKeySupported())
 	require.True(t, db.BytesKeySupported())
 
-	require.NoError(t, db.ValidateKeyValue("testKey", []byte("testValue")), "pebbledb should accept all key-values")
+	// ValidateKeyValue should return nil for a valid key and value
+	require.NoError(t, db.ValidateKeyValue("testKey", []byte("testValue")), "leveldb should accept all key-values")
 }
 
 func TestValueAndMetadataWrites(t *testing.T) {
@@ -131,6 +135,7 @@ func TestApplyUpdatesWithNilHeight(t *testing.T) {
 }
 
 func TestDataExportImport(t *testing.T) {
+	// smaller batch size for testing to cover the boundary case of writing the final batch
 	maxDataImportBatchSize = 10
 	env := NewTestVDBEnv(t)
 	defer env.Cleanup()
@@ -157,18 +162,34 @@ func TestFullScanIteratorErrorPropagation(t *testing.T) {
 		}
 	}
 
+	reInitEnv := func() {
+		env.Cleanup()
+		initEnv()
+	}
+
 	initEnv()
 	defer cleanup()
 
-	t.Run("error from function GetFullScanIterator", func(t *testing.T) {
-		vdbProvider.Close()
-		_, err := vdb.GetFullScanIterator(
-			func(string) bool {
-				return false
-			},
-		)
-		require.ErrorContains(t, err, "pebble db at path")
-	})
+	// error from function GetFullScanIterator
+	vdbProvider.Close()
+	_, err := vdb.GetFullScanIterator(
+		func(string) bool {
+			return false
+		},
+	)
+	require.Contains(t, err.Error(), "internal leveldb error while obtaining db iterator:")
+
+	// error from function Next
+	reInitEnv()
+	itr, err := vdb.GetFullScanIterator(
+		func(string) bool {
+			return false
+		},
+	)
+	require.NoError(t, err)
+	itr.Close()
+	_, err = itr.Next()
+	require.Contains(t, err.Error(), "internal leveldb error while retrieving data from db iterator:")
 }
 
 func TestImportStateErrorPropagation(t *testing.T) {
@@ -204,23 +225,22 @@ func TestImportStateErrorPropagation(t *testing.T) {
 		defer cleanup()
 
 		vdbProvider.Close()
-		require.Panics(t, func() {
-			vdbProvider.ImportFromSnapshot(
-				"test-db", version.NewHeight(2, 2),
-				&dummyFullScanIter{
-					kv: &statedb.VersionedKV{
-						CompositeKey: &statedb.CompositeKey{
-							Namespace: "ns",
-							Key:       "key",
-						},
-						VersionedValue: &statedb.VersionedValue{
-							Value:   []byte("value"),
-							Version: version.NewHeight(1, 1),
-						},
+		err := vdbProvider.ImportFromSnapshot(
+			"test-db", version.NewHeight(2, 2),
+			&dummyFullScanIter{
+				kv: &statedb.VersionedKV{
+					CompositeKey: &statedb.CompositeKey{
+						Namespace: "ns",
+						Key:       "key",
+					},
+					VersionedValue: &statedb.VersionedValue{
+						Value:   []byte("value"),
+						Version: version.NewHeight(1, 1),
 					},
 				},
-			)
-		})
+			},
+		)
+		require.Contains(t, err.Error(), "error writing batch to leveldb")
 	})
 }
 
@@ -245,8 +265,7 @@ func TestDropErrorPath(t *testing.T) {
 	require.NoError(t, err)
 
 	env.DBProvider.Close()
-	err = env.DBProvider.Drop("testdroperror")
-	require.ErrorContains(t, err, "pebble db at path")
+	require.EqualError(t, env.DBProvider.Drop("testdroperror"), "internal leveldb error while obtaining db iterator: leveldb: closed")
 }
 
 type dummyFullScanIter struct {
@@ -258,4 +277,5 @@ func (d *dummyFullScanIter) Next() (*statedb.VersionedKV, error) {
 	return d.kv, d.err
 }
 
-func (d *dummyFullScanIter) Close() {}
+func (d *dummyFullScanIter) Close() {
+}

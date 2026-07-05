@@ -10,8 +10,7 @@ import (
 	"os"
 
 	db "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/internal/fileutil"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
@@ -63,22 +62,7 @@ func newRollbackMgr(blockStorageDir, ledgerID string, indexConfig *IndexConfig, 
 
 	r.indexDir = conf.getIndexDir()
 	var err error
-	switch dbType {
-	case db.PebbleDB:
-		r.dbProvider, err = pebblehelper.NewProvider(
-			&pebblehelper.Conf{
-				DBPath:         r.indexDir,
-				ExpectedFormat: dataFormatVersion(indexConfig),
-			},
-		)
-	default:
-		r.dbProvider, err = leveldbhelper.NewProvider(
-			&leveldbhelper.Conf{
-				DBPath:         r.indexDir,
-				ExpectedFormat: dataFormatVersion(indexConfig),
-			},
-		)
-	}
+	r.dbProvider, err = dbfactory.NewProvider(dbType, r.indexDir, dataFormatVersion(indexConfig))
 	if err != nil {
 		return nil, err
 	}

@@ -34,21 +34,15 @@ type Conf struct {
 	ExpectedFormat string
 }
 
-// DataFormatInfo contains the information about the version of the data format.
-type DataFormatInfo struct {
-	FormatVerison string
-	IsDBEmpty     bool
-}
-
-// RetrieveDataFormatInfo retrieves the DataFormatInfo for the db at the supplied dbPath.
-func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
+// RetrieveDataFormatInfo retrieves the FormatVerison and IsDBEmpty for the db at the supplied dbPath.
+func RetrieveDataFormatInfo(dbPath string) (formatVerison string, isDBEmpty bool, err error) {
 	db := CreateDB(&Conf{DBPath: dbPath})
 	db.Open()
 	defer db.Close()
 
 	dbEmpty, err := db.IsEmpty()
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 
 	db.dbName = internalDBName
@@ -59,13 +53,10 @@ func RetrieveDataFormatInfo(dbPath string) (*DataFormatInfo, error) {
 
 	formatVersion, err := internalDB.Get(formatVersionKey)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 
-	return &DataFormatInfo{
-		IsDBEmpty:     dbEmpty,
-		FormatVerison: string(formatVersion),
-	}, nil
+	return string(formatVersion), dbEmpty, nil
 }
 
 // PebbleProvider enables using a single pebble db as multiple logical databases.

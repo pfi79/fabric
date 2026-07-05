@@ -4,26 +4,27 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package statepebbledb
+package statekvdb
 
 import (
 	"testing"
 
+	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/stretchr/testify/require"
 )
 
-// TestVDBEnv provides a pebble db backed versioned db for testing
+// TestVDBEnv provides a level db backed versioned db for testing
 type TestVDBEnv struct {
 	t          testing.TB
 	DBProvider *VersionedDBProvider
 	dbPath     string
 }
 
-// NewTestVDBEnv instantiates and new pebble db backed TestVDB
+// NewTestVDBEnv instantiates and new level db backed TestVDB
 func NewTestVDBEnv(t testing.TB) *TestVDBEnv {
 	t.Logf("Creating new TestVDBEnv")
 	dbPath := t.TempDir()
-	dbProvider, err := NewVersionedDBProvider(dbPath)
+	dbProvider, err := NewVersionedDBProvider(dbPath, db.GoLevelDB)
 	require.NoError(t, err)
 	return &TestVDBEnv{t, dbProvider, dbPath}
 }

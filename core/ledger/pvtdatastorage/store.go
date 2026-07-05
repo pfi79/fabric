@@ -16,8 +16,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	db "github.com/hyperledger/fabric/common/ledger"
-	"github.com/hyperledger/fabric/common/ledger/util/leveldbhelper"
-	"github.com/hyperledger/fabric/common/ledger/util/pebblehelper"
+	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/confighistory"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
@@ -183,26 +182,7 @@ type lastUpdatedOldBlocksList []uint64
 
 // NewProvider instantiates a StoreProvider
 func NewProvider(conf *PrivateDataConfig) (*Provider, error) {
-	var (
-		dbProvider db.Provider
-		err        error
-	)
-	switch conf.DBType {
-	case db.PebbleDB:
-		dbProvider, err = pebblehelper.NewProvider(
-			&pebblehelper.Conf{
-				DBPath:         conf.StorePath,
-				ExpectedFormat: currentDataVersion,
-			},
-		)
-	default:
-		dbProvider, err = leveldbhelper.NewProvider(
-			&leveldbhelper.Conf{
-				DBPath:         conf.StorePath,
-				ExpectedFormat: currentDataVersion,
-			},
-		)
-	}
+	dbProvider, err := dbfactory.NewProvider(conf.DBType, conf.StorePath, currentDataVersion)
 	if err != nil {
 		return nil, err
 	}
