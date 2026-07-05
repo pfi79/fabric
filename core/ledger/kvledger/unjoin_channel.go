@@ -11,7 +11,6 @@ import (
 	"github.com/hyperledger/fabric-lib-go/healthz"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
-	db "github.com/hyperledger/fabric/common/ledger"
 	"github.com/hyperledger/fabric/common/ledger/blkstorage"
 	"github.com/hyperledger/fabric/common/ledger/util/dbfactory"
 	"github.com/hyperledger/fabric/core/ledger"
@@ -28,14 +27,14 @@ import (
 // invoked while the peer is shut down.
 func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 	// Ensure the routine is invoked while the peer is down.
-	fileLock := dbfactory.NewFileLock(config.StateDBConfig.StateDatabase, fileLockPath(config.RootFSPath))
+	fileLock := dbfactory.NewFileLock(config.StateDatabase, fileLockPath(config.RootFSPath))
 	if err := fileLock.Lock(); err != nil {
 		return errors.WithMessage(err, "as another peer node command is executing,"+
 			" wait for that command to complete its execution or terminate it before retrying")
 	}
 	defer fileLock.Unlock()
 
-	idStore, err := openIDStore(LedgerProviderPath(config.RootFSPath), config.StateDBConfig.StateDatabase)
+	idStore, err := openIDStore(LedgerProviderPath(config.RootFSPath), config.StateDatabase)
 	if err != nil {
 		return errors.WithMessagef(err, "unjoin channel [%s]", ledgerID)
 	}
@@ -64,11 +63,6 @@ func UnjoinChannel(config *ledger.Config, ledgerID string) error {
 
 // removeLedgerData removes the data for a given ledger. This function should be invoked when the peer is not running and the caller should hold the file lock for the KVLedgerProvider
 func removeLedgerData(config *ledger.Config, ledgerID string) error {
-	dbType := ledger.GoLevelDB
-	if config.StateDBConfig.StateDatabase == ledger.PebbleDB {
-		dbType = ledger.PebbleDB
-	}
-
 	blkStoreProvider, err := blkstorage.NewProvider(
 		blkstorage.NewConf(
 			BlockStorePath(config.RootFSPath),
@@ -76,14 +70,14 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		),
 		&blkstorage.IndexConfig{AttrsToIndex: attrsToIndex},
 		&disabled.Provider{},
-		dbType,
+		config.StateDatabase,
 	)
 	if err != nil {
 		return err
 	}
 	defer blkStoreProvider.Close()
 
-	bookkeepingProvider, err := bookkeeping.NewProvider(BookkeeperDBPath(config.RootFSPath), dbType)
+	bookkeepingProvider, err := bookkeeping.NewProvider(BookkeeperDBPath(config.RootFSPath), config.StateDatabase)
 	if err != nil {
 		return err
 	}
@@ -108,7 +102,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 		&pvtdatastorage.PrivateDataConfig{
 			PrivateDataConfig: config.PrivateDataConfig,
 			StorePath:         PvtDataStorePath(config.RootFSPath),
-			DBType:            dbType,
+			DBType:            config.StateDatabase,
 		},
 	)
 	if err != nil {
@@ -116,16 +110,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	}
 	defer pvtdataStoreProvider.Close()
 
-	historyDBType := db.GoLevelDB
-	if config.StateDatabase == db.PebbleDB {
-		historyDBType = db.PebbleDB
-	}
-	historydbProvider, err := history.NewDBProvider(
-		&history.HistoryDBConfig{
-			DBType: historyDBType,
-			DBPath: HistoryDBPath(config.RootFSPath),
-		},
-	)
+	historydbProvider, err := history.NewDBProvider(HistoryDBPath(config.RootFSPath), config.StateDatabase)
 	if err != nil {
 		return err
 	}
@@ -134,7 +119,7 @@ func removeLedgerData(config *ledger.Config, ledgerID string) error {
 	configHistoryMgr, err := confighistory.NewMgr(
 		ConfigHistoryDBPath(config.RootFSPath),
 		&noopDeployedChaincodeInfoProvider{},
-		dbType,
+		config.StateDatabase,
 	)
 	if err != nil {
 		return err

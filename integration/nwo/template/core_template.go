@@ -205,6 +205,7 @@ chaincode:
   {{- end }}
 
 ledger:
+  stateDatabase: goleveldb
   blockchain:
   state:
     stateDatabase: goleveldb

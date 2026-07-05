@@ -23,16 +23,16 @@ func TestLedgerConfig(t *testing.T) {
 		expected *ledger.Config
 	}{
 		{
-			name: "goleveldb",
+			name: ledger.GoLevelDB,
 			config: map[string]any{
 				"peer.fileSystemPath":        "/peerfs",
-				"ledger.state.stateDatabase": "goleveldb",
+				"ledger.state.stateDatabase": ledger.GoLevelDB,
 			},
 			expected: &ledger.Config{
 				RootFSPath:    "/peerfs/ledgersData",
 				StateDatabase: ledger.GoLevelDB,
 				StateDBConfig: &ledger.StateDBConfig{
-					StateDatabase: "goleveldb",
+					StateDatabase: ledger.GoLevelDB,
 					CouchDB:       &ledger.CouchDBConfig{},
 				},
 				PrivateDataConfig: &ledger.PrivateDataConfig{

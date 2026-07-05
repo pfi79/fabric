@@ -303,6 +303,11 @@ BCCSP:
 
 ```
 ledger:
+  # stateDatabase - options are "goleveldb", "pebbledb"
+  # Common database type for all internal KV stores (bookkeeping, pvtdata,
+  # transient store, redo-log, block index). Individual sections below
+  # (state) can override this value.
+  stateDatabase: goleveldb
 
   state:
     # stateDatabase - options are "goleveldb", "CouchDB"

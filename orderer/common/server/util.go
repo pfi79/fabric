@@ -18,7 +18,6 @@ import (
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
 	"github.com/hyperledger/fabric/common/ledger/blockledger/fileledger"
 	"github.com/hyperledger/fabric/common/util"
-	"github.com/hyperledger/fabric/core/ledger"
 	config "github.com/hyperledger/fabric/orderer/common/localconfig"
 	"github.com/hyperledger/fabric/orderer/common/throttle"
 	"github.com/pkg/errors"
@@ -31,13 +30,8 @@ func createLedgerFactory(conf *config.TopLevel, metricsProvider metrics.Provider
 		logger.Panic("Orderer.FileLedger.Location must be set")
 	}
 
-	dbtype := ledger.GoLevelDB
-	if conf.FileLedger.StateDatabase == ledger.PebbleDB {
-		dbtype = ledger.PebbleDB
-	}
-
 	logger.Debug("Ledger dir:", ld)
-	lf, err := fileledger.New(ld, dbtype, metricsProvider)
+	lf, err := fileledger.New(ld, conf.FileLedger.StateDatabase, metricsProvider)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Error in opening ledger factory")
 	}

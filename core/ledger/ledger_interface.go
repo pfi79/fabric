@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	GoLevelDB = "goleveldb"
-	PebbleDB  = "pebbledb"
+	GoLevelDB = commonledger.GoLevelDB
 	CouchDB   = "CouchDB"
 )
 

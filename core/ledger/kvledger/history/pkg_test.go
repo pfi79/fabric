@@ -65,12 +65,7 @@ func newTestHistoryEnv(t *testing.T) *levelDBLockBasedHistoryEnv {
 	txMgr, err := txmgr.NewLockBasedTxMgr(txmgrInitializer)
 
 	require.NoError(t, err)
-	testHistoryDBProvider, err := NewDBProvider(
-		&HistoryDBConfig{
-			DBType: db.GoLevelDB,
-			DBPath: testHistoryDBPath,
-		},
-	)
+	testHistoryDBProvider, err := NewDBProvider(testHistoryDBPath, db.GoLevelDB)
 	require.NoError(t, err)
 	testHistoryDB := testHistoryDBProvider.GetDBHandle("TestHistoryDB")
 

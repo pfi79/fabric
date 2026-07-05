@@ -293,7 +293,7 @@ func serve(args []string) error {
 
 	transientStoreProvider, err := transientstore.NewStoreProvider(
 		filepath.Join(coreconfig.GetPath("peer.fileSystemPath"), "transientstore"),
-		viper.GetString("ledger.state.stateDatabase"),
+		viper.GetString("ledger.stateDatabase"),
 	)
 	if err != nil {
 		return errors.WithMessage(err, "failed to open transient store")

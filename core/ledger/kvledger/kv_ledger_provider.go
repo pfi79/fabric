@@ -184,11 +184,7 @@ func (p *Provider) initHistoryDBProvider() error {
 	}
 
 	// Initialize the history database (index for history of values by key)
-	historyDBConfig := &history.HistoryDBConfig{
-		DBType: p.dbType,
-		DBPath: HistoryDBPath(p.initializer.Config.RootFSPath),
-	}
-	historydbProvider, err := history.NewDBProvider(historyDBConfig)
+	historydbProvider, err := history.NewDBProvider(HistoryDBPath(p.initializer.Config.RootFSPath), p.dbType)
 	if err != nil {
 		return err
 	}

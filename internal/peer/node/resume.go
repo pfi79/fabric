@@ -31,6 +31,6 @@ var resumeChannelCmd = &cobra.Command{
 		}
 
 		config := ledgerConfig()
-		return kvledger.ResumeChannel(config.RootFSPath, config.StateDBConfig.StateDatabase, channelID)
+		return kvledger.ResumeChannel(config.RootFSPath, config.StateDatabase, channelID)
 	},
 }

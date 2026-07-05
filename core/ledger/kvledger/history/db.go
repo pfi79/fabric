@@ -21,17 +21,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// HistoryDBConfig encapsulates the configuration for the history database.
-type HistoryDBConfig struct {
-	// DBType is the database to use for storing last known state.  The
-	// supported options are "goleveldb", "pebbledb" (captured in the constants GoLevelDB, PebbleDB).
-	DBType string
-	// DBPath is the filesystem path for the history database.
-	// It is internally computed by the ledger component,
-	// so it is not in ledger.HistoryDBConfig and not exposed to other components.
-	DBPath string
-}
-
 var logger = flogging.MustGetLogger("history")
 
 // DBProvider provides handle to HistoryDB for a given channel
@@ -40,9 +29,9 @@ type DBProvider struct {
 }
 
 // NewDBProvider instantiates DBProvider
-func NewDBProvider(conf *HistoryDBConfig) (*DBProvider, error) {
-	logger.Debugf("constructing HistoryDBProvider dbPath=%s", conf.DBPath)
-	dbp, err := dbfactory.NewProvider(conf.DBType, conf.DBPath, dataformat.CurrentFormat)
+func NewDBProvider(dbPath string, dbType string) (*DBProvider, error) {
+	logger.Debugf("constructing HistoryDBProvider dbPath=%s", dbPath)
+	dbp, err := dbfactory.NewProvider(dbType, dbPath, dataformat.CurrentFormat)
 	if err != nil {
 		return nil, err
 	}
