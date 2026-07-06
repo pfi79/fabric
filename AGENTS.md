@@ -3,7 +3,7 @@
 ## Repo structure
 
 - **Single Go module** `github.com/hyperledger/fabric` at root + a **separate module** `github.com/hyperledger/fabric/ccaas_builder` (go 1.16) in `ccaas_builder/`.
-- **Entry points** (binaries): `cmd/orderer`, `cmd/peer`, `cmd/configtxgen`, `cmd/configtxlator`, `cmd/cryptogen`, `cmd/discover`, `cmd/ledgerutil`, `cmd/osnadmin`.
+- **Entry points** (binaries): `cmd/orderer`, `cmd/peer`, `cmd/configtxgen`, `cmd/configtxlator`, `cmd/cryptogen`, `cmd/discover`, `cmd/ledgerutil`, `cmd/osnadmin`, `cmd/dbmigrator`.
 - **Key internal packages**: `core/` (ledger, chaincode, container, endorser), `orderer/` (consensus/raft), `gossip/`, `discovery/`, `internal/` (command implementations).
 - **Vendored dependencies** (`vendor/`). When adding deps: `go mod tidy && go mod vendor && git diff --exit-code`.
 - **Docker namespace**: `hyperledger` (override via `DOCKER_NS`). Images: `fabric-peer`, `fabric-orderer`, `fabric-baseos`, `fabric-ccenv`.

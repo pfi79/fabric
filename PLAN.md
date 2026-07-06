@@ -581,7 +581,7 @@ FileLedger:
 
 ---
 
-### Этап 11: Утилита миграции — `cmd/dbmigrator`
+### Этап 11: Утилита миграции — `cmd/dbmigrator` [Done]
 
 **Отдельная standalone-программа**, собирается как `build/bin/dbmigrator`.
 
@@ -626,15 +626,12 @@ chains/<channelId>/index
    - Прогресс-бар (счётчик ключей/байт)
 4. По завершению: вывести инструкцию:
    ```
-   Migration complete. To activate PebbleDB:
-   1. Backup old directories:
-      mv ledgersData/stateLeveldb ledgersData/stateLeveldb.bak
-   2. Rename migrated directories:
-      mv ledgersData/stateLeveldb_pebble ledgersData/stateLeveldb
-   3. Update config:
-      core.yaml:   ledger.state.stateDatabase: pebbledb
-      orderer.yaml: FileLedger.stateDatabase: pebbledb
-   4. Start the node
+   Migration completed. To activate PebbleDB:
+   1. Backups of old directories are in packages with the bak extension
+   2. Update the configuration:
+   core.yaml: ledger.statedbase: pebbledb and ledger.state.statedbase: pebbledb
+   orderer.yaml: FileLedger.statedbase: pebbledb
+   3. Start the node
    ```
 
 **Файлы утилиты:**
