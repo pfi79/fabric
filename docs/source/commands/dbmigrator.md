@@ -30,11 +30,21 @@ Typical directories to migrate:
     ledgersData/bookkeeper
     ledgersData/pvtdataStore
     ledgersData/configHistory
-    ledgersData/chains/<channelId>/index
-    transientStore
+    ledgersData/chains/index
+    ledgersData/ledgerProvider
+    transientstore
 
   Orderer:
-    chains/<channelId>/index
+    <ordererDir>/system/index
+
+After migration, remove old LevelDB file lock directories manually because
+PebbleDB uses a regular file (syscall.Flock) instead:
+
+  Peer:
+    <ledgersData>/fileLock
+    <peerFS>/transientStoreFileLock
+
+  Orderer: (none — orderer does not use FileLock)
 
 Flags:
   --help                 Show context-sensitive help (also try --help-long and

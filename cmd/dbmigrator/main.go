@@ -28,11 +28,21 @@ Typical directories to migrate:
     ledgersData/bookkeeper
     ledgersData/pvtdataStore
     ledgersData/configHistory
-    ledgersData/chains/<channelId>/index
-    transientStore
+    ledgersData/chains/index
+    ledgersData/ledgerProvider
+    transientstore
 
   Orderer:
-    chains/<channelId>/index
+    <ordererDir>/system/index
+
+After migration, remove old LevelDB file lock directories manually
+because PebbleDB uses a regular file (syscall.Flock) instead:
+
+  Peer:
+    <ledgersData>/fileLock
+    <peerFS>/transientStoreFileLock
+
+  Orderer: (none — orderer does not use FileLock)
 `
 )
 
@@ -66,8 +76,9 @@ func main() {
 
 	fmt.Print(`Migration completed. To activate PebbleDB:
    1. Backups of old directories are in packages with the bak extension
-   2. Update the configuration:
+   2. Remove old LevelDB file lock directories (see --help for paths)
+   3. Update the configuration:
    - core.yaml: ledger.statedbase: pebbledb and ledger.state.statedbase: pebbledb
    - orderer.yaml: FileLedger.statedbase: pebbledb
-   3. Start the node`)
+   4. Start the node`)
 }

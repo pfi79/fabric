@@ -650,11 +650,24 @@ chains/<channelId>/index
 
 ### Этап 12: Интеграционные тесты
 
-**12.1 Тест миграции хранилищ (Ginkgo + Gomega)**
+**12.1 Подготовительная часть** [Done]
 
-- Набор тестов `core/ledger/kvledger/txmgmt/statedb/statepebbledb/integration/`
+- Изменить nwo в плане конфигурации `ledger.stateDatabase` и `ledger.state.stateDatabase`. Данный параметр по умолчанию задавать leveldb, но иметь возможность его изменять из кода.
+
+**12.2 Тест работоспособности с PebbleDB  (Ginkgo + Gomega)** [Done]
+
+- Набор тестов `integration/ledger/pebbledb_test.go`
 - Поднимает тестовую сеть через `nwo`
-- Развёртывает network с `stateDatabase: goleveldb`
+- Развёртывает network с `ledger.stateDatabase: pebbledb` и `ledger.state.stateDatabase: pebbledb`
+- Деплоит chaincode, отправляет транзакции
+- Проверяет, что транзакции выполнились 
+- Останавливает сеть
+
+**12.3 Тест миграции хранилищ (Ginkgo + Gomega)** [Done]
+
+- Набор тестов `integration/ledger/pebbledb_test.go`
+- Поднимает тестовую сеть через `nwo`
+- Развёртывает network с `ledger.stateDatabase: goleveldb` и `ledger.state.stateDatabase: goleveldb`
 - Деплоит chaincode, отправляет транзакции
 - Останавливает сеть
 - Запускает `dbmigrator` для миграции LevelDB → PebbleDB
@@ -664,17 +677,17 @@ chains/<channelId>/index
   история, приватные данные
 - Аналогичный тест для orderer (fileledger index migration)
 
-**12.2 Бенчмарк производительности хранилищ**
+**12.4 Бенчмарк производительности хранилищ (Ginkgo + Gomega)** [Done]
 
-- Тест `core/ledger/kvledger/txmgmt/statedb/statepebbledb/benchmark_test.go`
+- Тест `integration/ledger/pebbledb_test.go`
+- используй DescribeTableSubtree и experiment.SampleDuration
 - Сравнение GoLevelDB vs PebbleDB на одинаковых сценариях:
   - Sequential write (put 1M keys)
   - Random read
   - Range scan (итерация)
   - Batch write
 - Замеры: ops/sec, latency p50/p99, размер БД на диске
-- Запуск: `go test -bench=. -benchtime=1x ./core/ledger/kvledger/txmgmt/statedb/statepebbledb/...`
-- Результаты сохранять в `docs/benchmark/pebble_vs_goleveldb.md`
+- Запуск стандартно как интеграционный тест
 
 ---
 
