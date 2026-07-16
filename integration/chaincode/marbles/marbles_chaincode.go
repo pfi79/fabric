@@ -122,27 +122,28 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) *pb.Response 
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
-	if function == "initMarble" { // create a new marble
+	switch function {
+	case "initMarble": // create a new marble
 		return t.initMarble(stub, args)
-	} else if function == "transferMarble" { // change owner of a specific marble
+	case "transferMarble": // change owner of a specific marble
 		return t.transferMarble(stub, args)
-	} else if function == "transferMarblesBasedOnColor" { // transfer all marbles of a certain color
+	case "transferMarblesBasedOnColor": // transfer all marbles of a certain color
 		return t.transferMarblesBasedOnColor(stub, args)
-	} else if function == "delete" { // delete a marble
+	case "delete": // delete a marble
 		return t.delete(stub, args)
-	} else if function == "readMarble" { // read a marble
+	case "readMarble": // read a marble
 		return t.readMarble(stub, args)
-	} else if function == "queryMarblesByOwner" { // find marbles for owner X using rich query
+	case "queryMarblesByOwner": // find marbles for owner X using rich query
 		return t.queryMarblesByOwner(stub, args)
-	} else if function == "queryMarbles" { // find marbles based on an ad hoc rich query
+	case "queryMarbles": // find marbles based on an ad hoc rich query
 		return t.queryMarbles(stub, args)
-	} else if function == "getHistoryForMarble" { // get history of values for a marble
+	case "getHistoryForMarble": // get history of values for a marble
 		return t.getHistoryForMarble(stub, args)
-	} else if function == "getMarblesByRange" { // get marbles based on range query
+	case "getMarblesByRange": // get marbles based on range query
 		return t.getMarblesByRange(stub, args)
-	} else if function == "getMarblesByRangeWithPagination" {
+	case "getMarblesByRangeWithPagination":
 		return t.getMarblesByRangeWithPagination(stub, args)
-	} else if function == "queryMarblesWithPagination" {
+	case "queryMarblesWithPagination":
 		return t.queryMarblesWithPagination(stub, args)
 	}
 
@@ -384,7 +385,7 @@ func constructQueryResponseFromIterator(resultsIterator shim.StateQueryIteratorI
 func addPaginationMetadataToQueryResults(buffer *bytes.Buffer, responseMetadata *pb.QueryResponseMetadata) *bytes.Buffer {
 	buffer.WriteString("[{\"ResponseMetadata\":{\"RecordsCount\":")
 	buffer.WriteString("\"")
-	buffer.WriteString(fmt.Sprintf("%v", responseMetadata.FetchedRecordsCount))
+	fmt.Fprintf(buffer, "%v", responseMetadata.FetchedRecordsCount)
 	buffer.WriteString("\"")
 	buffer.WriteString(", \"Bookmark\":")
 	buffer.WriteString("\"")

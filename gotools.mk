@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-GOTOOLS = counterfeiter gendoc ginkgo gocov gocov-xml gofumpt goimports govulncheck misspell mockery protoc-gen-go protoc-gen-go-grpc staticcheck swagger
+GOTOOLS = counterfeiter gendoc ginkgo gocov gocov-xml golangci-lint govulncheck mockery protoc-gen-go protoc-gen-go-grpc swagger
 BUILD_DIR ?= build
 GOTOOLS_BINDIR ?= $(shell go env GOPATH)/bin
 
@@ -13,13 +13,10 @@ go.fqp.gendoc		      := github.com/hyperledger/fabric-lib-go/common/metrics/cmd/
 go.fqp.ginkgo             := github.com/onsi/ginkgo/v2/ginkgo
 go.fqp.gocov              := github.com/axw/gocov/gocov
 go.fqp.gocov-xml          := github.com/AlekSi/gocov-xml
-go.fqp.gofumpt            := mvdan.cc/gofumpt
-go.fqp.goimports          := golang.org/x/tools/cmd/goimports
-go.fqp.misspell           := github.com/client9/misspell/cmd/misspell
+go.fqp.golangci-lint      := github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 go.fqp.mockery            := github.com/vektra/mockery/v2
 go.fqp.protoc-gen-go      := google.golang.org/protobuf/cmd/protoc-gen-go
 go.fqp.protoc-gen-go-grpc := google.golang.org/grpc/cmd/protoc-gen-go-grpc
-go.fqp.staticcheck        := honnef.co/go/tools/cmd/staticcheck
 go.fqp.swagger            := github.com/go-swagger/go-swagger/cmd/swagger
 
 .PHONY: gotools-install

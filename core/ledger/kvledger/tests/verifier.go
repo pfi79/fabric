@@ -212,7 +212,7 @@ func (r *retrievedBlockAndPvtdata) hasNoPvtdata() {
 }
 
 func (r *retrievedBlockAndPvtdata) pvtdataShouldContain(txSeq int, ns, coll, key, value string) {
-	txPvtData := r.BlockAndPvtData.PvtData[uint64(txSeq)]
+	txPvtData := r.PvtData[uint64(txSeq)]
 	for _, nsdata := range txPvtData.WriteSet.NsPvtRwset {
 		if nsdata.Namespace == ns {
 			for _, colldata := range nsdata.CollectionPvtRwset {
@@ -233,7 +233,7 @@ func (r *retrievedBlockAndPvtdata) pvtdataShouldContain(txSeq int, ns, coll, key
 }
 
 func (r *retrievedBlockAndPvtdata) pvtdataShouldNotContainKey(ns, coll, key string) {
-	allTxPvtData := r.BlockAndPvtData.PvtData
+	allTxPvtData := r.PvtData
 	for _, txPvtData := range allTxPvtData {
 		for _, nsdata := range txPvtData.WriteSet.NsPvtRwset {
 			if nsdata.Namespace == ns {
@@ -252,15 +252,15 @@ func (r *retrievedBlockAndPvtdata) pvtdataShouldNotContainKey(ns, coll, key stri
 }
 
 func (r *retrievedBlockAndPvtdata) pvtdataShouldNotContain(ns, coll string) {
-	allTxPvtData := r.BlockAndPvtData.PvtData
+	allTxPvtData := r.PvtData
 	for _, txPvtData := range allTxPvtData {
 		r.assert.False(txPvtData.Has(ns, coll))
 	}
 }
 
 func (r *retrievedBlockAndPvtdata) sameBlockHeaderAndData(expectedBlock *common.Block) {
-	r.assert.True(proto.Equal(expectedBlock.Data, r.BlockAndPvtData.Block.Data))
-	r.assert.True(proto.Equal(expectedBlock.Header, r.BlockAndPvtData.Block.Header))
+	r.assert.True(proto.Equal(expectedBlock.Data, r.Block.Data))
+	r.assert.True(proto.Equal(expectedBlock.Header, r.Block.Header))
 }
 
 func (r *retrievedBlockAndPvtdata) sameMetadata(expectedBlock *common.Block) {
@@ -282,14 +282,14 @@ func (r *retrievedBlockAndPvtdata) sameMetadata(expectedBlock *common.Block) {
 }
 
 func (r *retrievedBlockAndPvtdata) containsValidationCode(txSeq int, validationCode protopeer.TxValidationCode) {
-	txFilter := txflags.ValidationFlags(r.BlockAndPvtData.Block.Metadata.Metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER])
+	txFilter := txflags.ValidationFlags(r.Block.Metadata.Metadata[common.BlockMetadataIndex_TRANSACTIONS_FILTER])
 	r.assert.Equal(validationCode, txFilter.Flag(txSeq))
 }
 
 func (r *retrievedBlockAndPvtdata) samePvtdata(expectedPvtdata map[uint64]*ledger.TxPvtData) {
-	r.assert.Equal(len(expectedPvtdata), len(r.BlockAndPvtData.PvtData))
+	r.assert.Equal(len(expectedPvtdata), len(r.PvtData))
 	for txNum, pvtData := range expectedPvtdata {
-		actualPvtData := r.BlockAndPvtData.PvtData[txNum]
+		actualPvtData := r.PvtData[txNum]
 		r.assert.Equal(pvtData.SeqInBlock, actualPvtData.SeqInBlock)
 		r.assert.True(proto.Equal(pvtData.WriteSet, actualPvtData.WriteSet))
 	}

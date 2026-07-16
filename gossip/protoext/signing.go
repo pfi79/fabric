@@ -99,7 +99,7 @@ func (m *SignedGossipMessage) Sign(signer Signer) (*gossip.Envelope, error) {
 	// Back it up, and restore it later
 	var secretEnvelope *gossip.SecretEnvelope
 	if m.Envelope != nil {
-		secretEnvelope = m.Envelope.SecretEnvelope
+		secretEnvelope = m.SecretEnvelope
 	}
 	m.Envelope = nil
 	if m.GossipMessage == nil {
@@ -129,19 +129,19 @@ func (m *SignedGossipMessage) Verify(peerIdentity []byte, verify Verifier) error
 	if m.Envelope == nil {
 		return errors.New("Missing envelope")
 	}
-	if len(m.Envelope.Payload) == 0 {
+	if len(m.Payload) == 0 {
 		return errors.New("Empty payload")
 	}
-	if len(m.Envelope.Signature) == 0 {
+	if len(m.Signature) == 0 {
 		return errors.New("Empty signature")
 	}
-	payloadSigVerificationErr := verify(peerIdentity, m.Envelope.Signature, m.Envelope.Payload)
+	payloadSigVerificationErr := verify(peerIdentity, m.Signature, m.Payload)
 	if payloadSigVerificationErr != nil {
 		return payloadSigVerificationErr
 	}
-	if m.Envelope.SecretEnvelope != nil {
-		payload := m.Envelope.SecretEnvelope.Payload
-		sig := m.Envelope.SecretEnvelope.Signature
+	if m.SecretEnvelope != nil {
+		payload := m.SecretEnvelope.Payload
+		sig := m.SecretEnvelope.Signature
 		if len(payload) == 0 {
 			return errors.New("Empty payload")
 		}
@@ -156,7 +156,7 @@ func (m *SignedGossipMessage) Verify(peerIdentity []byte, verify Verifier) error
 // IsSigned returns whether the message
 // has a signature in the envelope.
 func (m *SignedGossipMessage) IsSigned() bool {
-	return m.Envelope != nil && m.Envelope.Payload != nil && m.Envelope.Signature != nil
+	return m.Envelope != nil && m.Payload != nil && m.Signature != nil
 }
 
 // String returns a string representation
@@ -170,7 +170,7 @@ func (m *SignedGossipMessage) String() string {
 			sl := len(m.SecretEnvelope.Signature)
 			secretEnv = fmt.Sprintf(" Secret payload: %d bytes, Secret Signature: %d bytes", pl, sl)
 		}
-		env = fmt.Sprintf("%d bytes, Signature: %d bytes%s", len(m.Envelope.Payload), len(m.Envelope.Signature), secretEnv)
+		env = fmt.Sprintf("%d bytes, Signature: %d bytes%s", len(m.Payload), len(m.Signature), secretEnv)
 	}
 	gMsg := "No gossipMessage"
 	if m.GossipMessage != nil {

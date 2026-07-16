@@ -116,7 +116,7 @@ checks: ## Runs basic checks along with unit and integration tests
 	basic-checks unit-test integration-test
 
 .PHONY: basic-checks
-basic-checks: check-go-version license spelling references trailing-spaces linter check-help-docs check-metrics-doc filename-spaces check-swagger ## Performs basic checks like license, spelling, trailing spaces and linter
+basic-checks: check-go-version license references trailing-spaces linter check-help-docs check-metrics-doc filename-spaces check-swagger ## Performs basic checks like license, trailing spaces and linter
 
 
 .PHONY: desk-checks
@@ -130,10 +130,6 @@ help-docs: native ## Generate the command reference docs
 .PHONY: check-help-docs
 check-help-docs: native ## Check for outdated command reference documentation
 	@scripts/help_docs.sh check
-
-.PHONY: spelling
-spelling: gotool.misspell ## Check for spelling errors
-	@scripts/check_spelling.sh
 
 .PHONY: references
 references: ## Check for outdated references
@@ -188,9 +184,9 @@ profile: export JOB_TYPE=PROFILE ## Runs unit tests for all packages in coverpro
 profile: unit-test # Runs unit tests for all packages in coverprofile mode (slow)
 
 .PHONY: linter
-linter: gotool.goimports gotool.gofumpt gotool.staticcheck ## Runs all code checks
+linter: gotool.golangci-lint ## Runs all code checks
 	@echo "LINT: Running code checks.."
-	./scripts/golinter.sh
+	$(GOTOOLS_BINDIR)/golangci-lint run ./...
 
 .PHONY: check-metrics-docs
 check-metrics-doc: gotool.gendoc ## Check for outdated reference documentation

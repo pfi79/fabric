@@ -52,8 +52,7 @@ func TestTxOpsPreparationValueUpdate(t *testing.T) {
 	defer testDBEnv.Cleanup()
 	db := testDBEnv.GetDBHandle("TestDB")
 
-	ck1, ck2, ck3 :=
-		compositeKey{ns: "ns1", key: "key1"},
+	ck1, ck2, ck3 := compositeKey{ns: "ns1", key: "key1"},
 		compositeKey{ns: "ns1", key: "key2"},
 		compositeKey{ns: "ns1", key: "key3"}
 
@@ -110,8 +109,7 @@ func TestTxOpsPreparationMetadataUpdates(t *testing.T) {
 	defer testDBEnv.Cleanup()
 	db := testDBEnv.GetDBHandle("TestDB")
 
-	ck1, ck2, ck3 :=
-		compositeKey{ns: "ns1", key: "key1"},
+	ck1, ck2, ck3 := compositeKey{ns: "ns1", key: "key1"},
 		compositeKey{ns: "ns1", key: "key2"},
 		compositeKey{ns: "ns1", key: "key3"}
 
@@ -163,10 +161,7 @@ func TestTxOpsPreparationMetadataDelete(t *testing.T) {
 	defer testDBEnv.Cleanup()
 	db := testDBEnv.GetDBHandle("TestDB")
 
-	ck1, ck2, ck3 :=
-		compositeKey{ns: "ns1", key: "key1"},
-		compositeKey{ns: "ns1", key: "key2"},
-		compositeKey{ns: "ns1", key: "key3"}
+	ck1, ck2, ck3 := compositeKey{ns: "ns1", key: "key1"}, compositeKey{ns: "ns1", key: "key2"}, compositeKey{ns: "ns1", key: "key3"}
 
 	updateBatch := privacyenabledstate.NewUpdateBatch()
 	updateBatch.PubUpdates.Put(ck1.ns, ck1.key, []byte("value1"), version.NewHeight(1, 1)) // write key1 with only value
@@ -214,8 +209,7 @@ func TestTxOpsPreparationMixedUpdates(t *testing.T) {
 	defer testDBEnv.Cleanup()
 	db := testDBEnv.GetDBHandle("TestDB")
 
-	ck1, ck2, ck3, ck4 :=
-		compositeKey{ns: "ns1", key: "key1"},
+	ck1, ck2, ck3, ck4 := compositeKey{ns: "ns1", key: "key1"},
 		compositeKey{ns: "ns1", key: "key2"},
 		compositeKey{ns: "ns1", key: "key3"},
 		compositeKey{ns: "ns1", key: "key4"}
@@ -292,14 +286,12 @@ func TestTxOpsPreparationPvtdataHashes(t *testing.T) {
 	defer testDBEnv.Cleanup()
 	db := testDBEnv.GetDBHandle("TestDB")
 
-	ck1, ck2, ck3, ck4 :=
-		compositeKey{ns: "ns1", coll: "coll1", key: "key1"},
+	ck1, ck2, ck3, ck4 := compositeKey{ns: "ns1", coll: "coll1", key: "key1"},
 		compositeKey{ns: "ns1", coll: "coll1", key: "key2"},
 		compositeKey{ns: "ns1", coll: "coll1", key: "key3"},
 		compositeKey{ns: "ns1", coll: "coll1", key: "key4"}
 
-	ck1Hash, ck2Hash, ck3Hash, ck4Hash :=
-		compositeKey{ns: "ns1", coll: "coll1", key: string(util.ComputeStringHash("key1"))},
+	ck1Hash, ck2Hash, ck3Hash, ck4Hash := compositeKey{ns: "ns1", coll: "coll1", key: string(util.ComputeStringHash("key1"))},
 		compositeKey{ns: "ns1", coll: "coll1", key: string(util.ComputeStringHash("key2"))},
 		compositeKey{ns: "ns1", coll: "coll1", key: string(util.ComputeStringHash("key3"))},
 		compositeKey{ns: "ns1", coll: "coll1", key: string(util.ComputeStringHash("key4"))}

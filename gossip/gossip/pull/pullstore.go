@@ -180,7 +180,7 @@ func (p *pullMediatorImpl) HandleMessage(m protoext.ReceivedMessage) {
 		pullMsgType = HelloMsgType
 		p.engine.OnHello(helloMsg.Nonce, m)
 	} else if digest := msg.GetDataDig(); digest != nil {
-		d := p.PullAdapter.IngressDigFilter(digest)
+		d := p.IngressDigFilter(digest)
 		itemIDs = util.BytesToStrings(d.Digests)
 		pullMsgType = DigestMsgType
 		p.engine.OnDigest(itemIDs, d.Nonce, m)

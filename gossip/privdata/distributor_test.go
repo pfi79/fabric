@@ -176,9 +176,9 @@ func TestDistributor(t *testing.T) {
 	i := 0
 	require.Len(t, sendings, 8)
 	for dis := range sendings {
-		key := fmt.Sprintf("%s~%s", dis.PrivatePayload.Namespace, dis.PrivatePayload.CollectionName)
-		expectedMaxCount[key] += dis.SendCriteria.MaxPeers
-		expectedMinAck[key] += dis.SendCriteria.MinAck
+		key := fmt.Sprintf("%s~%s", dis.Namespace, dis.CollectionName)
+		expectedMaxCount[key] += dis.MaxPeers
+		expectedMinAck[key] += dis.MinAck
 		i++
 		if i == 8 {
 			break
