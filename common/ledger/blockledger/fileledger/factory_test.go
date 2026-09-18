@@ -57,9 +57,7 @@ func TestBlockStoreProviderErrors(t *testing.T) {
 	})
 
 	t.Run("remove", func(t *testing.T) {
-		dir, err := os.MkdirTemp("", "fileledger")
-		require.NoError(t, err, "Error creating temp dir: %s", err)
-		defer os.RemoveAll(dir)
+		dir := t.TempDir()
 		fileRepo, err := filerepo.New(filepath.Join(dir, "pendingops"), "remove")
 		require.NoError(t, err, "Error creating temp file repo: %s", err)
 
@@ -91,9 +89,7 @@ func TestBlockStoreProviderErrors(t *testing.T) {
 func TestMultiReinitialization(t *testing.T) {
 	metricsProvider := &disabled.Provider{}
 
-	dir, err := os.MkdirTemp("", "fileledger")
-	require.NoError(t, err, "Error creating temp dir: %s", err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	f, err := New(dir, metricsProvider)
 	require.NoError(t, err)
@@ -148,12 +144,10 @@ func TestNewErrors(t *testing.T) {
 	metricsProvider := &disabled.Provider{}
 
 	t.Run("creation of filerepo fails", func(t *testing.T) {
-		dir, err := os.MkdirTemp("", "fileledger")
-		require.NoError(t, err, "Error creating temp dir: %s", err)
-		defer os.RemoveAll(dir)
+		dir := t.TempDir()
 
 		fileRepoDir := filepath.Join(dir, "pendingops", "remove")
-		err = os.MkdirAll(fileRepoDir, 0o700)
+		err := os.MkdirAll(fileRepoDir, 0o700)
 		require.NoError(t, err, "Error creating temp dir: %s", err)
 		removeFile := filepath.Join(fileRepoDir, "rojo.remove")
 		_, err = os.Create(removeFile)
@@ -168,12 +162,10 @@ func TestNewErrors(t *testing.T) {
 	})
 
 	t.Run("removal fails", func(t *testing.T) {
-		dir, err := os.MkdirTemp("", "fileledger")
-		require.NoError(t, err, "Error creating temp dir: %s", err)
-		defer os.RemoveAll(dir)
+		dir := t.TempDir()
 
 		fileRepoDir := filepath.Join(dir, "pendingops", "remove")
-		err = os.MkdirAll(fileRepoDir, 0o777)
+		err := os.MkdirAll(fileRepoDir, 0o777)
 		require.NoError(t, err, "Error creating temp dir: %s", err)
 		removeFile := filepath.Join(fileRepoDir, "rojo.remove")
 		_, err = os.Create(removeFile)
@@ -190,9 +182,7 @@ func TestNewErrors(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	mockBlockStore := &mock.BlockStoreProvider{}
-	dir, err := os.MkdirTemp("", "fileledger")
-	require.NoError(t, err, "Error creating temp dir: %s", err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	fileRepo, err := filerepo.New(filepath.Join(dir, "pendingops"), "remove")
 	require.NoError(t, err, "Error creating temp file repo: %s", err)
