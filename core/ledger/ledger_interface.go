@@ -19,6 +19,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	commonledger "github.com/hyperledger/fabric/common/ledger"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/leveldbtrie"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 )
@@ -26,6 +27,9 @@ import (
 const (
 	GoLevelDB = commonledger.GoLevelDB
 	CouchDB   = "CouchDB"
+	// LevelDBTrie keeps the world state of a channel in a patricia merkle trie
+	// whose nodes are stored in LevelDB.
+	LevelDBTrie = "leveldbtrie"
 )
 
 // Initializer encapsulates dependencies for PeerLedgerProvider
@@ -67,6 +71,9 @@ type StateDBConfig struct {
 	// CouchDB is the configuration for CouchDB.  It is used when StateDatabase
 	// is set to "CouchDB".
 	CouchDB *CouchDBConfig
+	// LevelDBTrie is the configuration for the state trie.  It is used when
+	// StateDatabase is set to "leveldbtrie".
+	LevelDBTrie *leveldbtrie.Conf
 }
 
 // CouchDBConfig is a structure used to configure a CouchInstance.

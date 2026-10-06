@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/core/ledger"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/leveldbtrie"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 )
@@ -212,6 +213,123 @@ func TestLedgerConfig(t *testing.T) {
 			}
 			conf := ledgerConfig()
 			require.Equal(t, _test.expected, conf)
+		})
+	}
+}
+
+// The configuration of the trie is read as a whole: a key that is left out is
+// given the default of the specification, and a key that is set is taken at its
+// word, so that a walk turned off can be told from a walk never mentioned.
+func TestLedgerConfigLevelDBTrie(t *testing.T) {
+	defer viper.Reset()
+	tests := []struct {
+		name     string
+		config   map[string]any
+		expected *leveldbtrie.Conf
+	}{
+		{
+			name: "defaults",
+			config: map[string]any{
+				"ledger.state.stateDatabase": ledger.LevelDBTrie,
+			},
+			expected: &leveldbtrie.Conf{
+				VerifyOnOpen:     true,
+				KeepRoots:        2,
+				GCIntervalBlocks: 1000,
+				ExactMetrics:     false,
+			},
+		},
+		{
+			name: "all keys set",
+			config: map[string]any{
+				"ledger.state.stateDatabase":                ledger.LevelDBTrie,
+				"ledger.state.leveldbtrie.verifyOnOpen":     false,
+				"ledger.state.leveldbtrie.keepRoots":        5,
+				"ledger.state.leveldbtrie.gcIntervalBlocks": 250,
+				"ledger.state.leveldbtrie.exactMetrics":     true,
+			},
+			expected: &leveldbtrie.Conf{
+				VerifyOnOpen:     false,
+				KeepRoots:        5,
+				GCIntervalBlocks: 250,
+				ExactMetrics:     true,
+			},
+		},
+		{
+			// A walk set off must stay off: the whole configuration is built,
+			// so the key is not confused with one that was never mentioned.
+			name: "walk off",
+			config: map[string]any{
+				"ledger.state.stateDatabase":            ledger.LevelDBTrie,
+				"ledger.state.leveldbtrie.verifyOnOpen": false,
+			},
+			expected: &leveldbtrie.Conf{
+				VerifyOnOpen:     false,
+				KeepRoots:        2,
+				GCIntervalBlocks: 1000,
+				ExactMetrics:     false,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		_test := test
+		t.Run(_test.name, func(t *testing.T) {
+			viper.Reset()
+			viper.Set("peer.fileSystemPath", "/peerfs")
+			for k, v := range _test.config {
+				viper.Set(k, v)
+			}
+			conf := ledgerConfig()
+			require.Equal(t, ledger.LevelDBTrie, conf.StateDBConfig.StateDatabase)
+			require.Equal(t, _test.expected, conf.StateDBConfig.LevelDBTrie)
+		})
+	}
+}
+
+// A store that is not the trie is left to the choice that was there before it:
+// the configuration of the trie is not built at all, and the name of an unset
+// or unknown store is resolved the way it always was.
+func TestLedgerConfigWithoutLevelDBTrie(t *testing.T) {
+	defer viper.Reset()
+	tests := []struct {
+		name     string
+		config   map[string]any
+		expected string
+	}{
+		{
+			name:     "unset",
+			config:   nil,
+			expected: ledger.GoLevelDB,
+		},
+		{
+			name:     "empty",
+			config:   map[string]any{"ledger.state.stateDatabase": ""},
+			expected: ledger.GoLevelDB,
+		},
+		{
+			name:     "unknown",
+			config:   map[string]any{"ledger.state.stateDatabase": "someUnknownStore"},
+			expected: "someUnknownStore",
+		},
+		{
+			name:     "top level name is ignored",
+			config:   map[string]any{"ledger.stateDatabase": "someUnknownStore"},
+			expected: ledger.GoLevelDB,
+		},
+	}
+
+	for _, test := range tests {
+		_test := test
+		t.Run(_test.name, func(t *testing.T) {
+			viper.Reset()
+			viper.Set("peer.fileSystemPath", "/peerfs")
+			for k, v := range _test.config {
+				viper.Set(k, v)
+			}
+			conf := ledgerConfig()
+			require.Equal(t, _test.expected, conf.StateDBConfig.StateDatabase)
+			require.Nil(t, conf.StateDBConfig.LevelDBTrie)
 		})
 	}
 }

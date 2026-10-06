@@ -17,6 +17,31 @@ import (
 //go:generate counterfeiter -o mock/versioned_db.go -fake-name VersionedDB . VersionedDB
 //go:generate counterfeiter -o mock/namespace_provider.go -fake-name NamespaceProvider . NamespaceProvider
 
+// RootReporter receives the root of the state. It is called from the commit
+// path; an implementation must not return an error and must not influence the
+// commit.
+type RootReporter interface {
+	BlockRoot(channel string, height uint64, root []byte)
+	TxRoot(channel string, height uint64, txNum uint64, root []byte)
+	GC(channel string, liveNodes int, reclaimedNodes int, durationMillis float64)
+}
+
+// IntermediateRoots is a store that can hand out the root of the state after
+// every transaction of a block, beside the root of the block as a whole.
+//
+// The batches are what the boundaries between the transactions of the block are.
+// A store that does not implement this is given the updates of a block as one
+// batch, which is all it has ever been given, and the boundaries are of no
+// interest to it.
+type IntermediateRoots interface {
+	ApplyUpdatesWithRoots(
+		batch *UpdateBatch,
+		height *version.Height,
+		perTx []*UpdateBatch,
+		reporter RootReporter,
+	) error
+}
+
 // VersionedDBProvider provides an instance of an versioned DB
 type VersionedDBProvider interface {
 	// GetDBHandle returns a handle to a VersionedDB

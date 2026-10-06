@@ -681,10 +681,30 @@ ledger:
   blockchain:
 
   state:
-    # stateDatabase - options are "goleveldb", "CouchDB"
+    # stateDatabase - options are "goleveldb", "CouchDB", "leveldbtrie"
     # goleveldb - default state database stored in goleveldb.
     # CouchDB - store state database in CouchDB
+    # leveldbtrie - store the state in a patricia merkle trie whose nodes are
+    #               kept in the same goleveldb; the block and transaction roots
+    #               of the state are reported as metrics
     stateDatabase: goleveldb
+    # Configuration of the state trie. It is used when stateDatabase is
+    # "leveldbtrie"; the nodes of the tree live in the same goleveldb state
+    # store, so no other store has to be configured.
+    leveldbtrie:
+      # verifyOnOpen walks the whole tree when a channel is opened and checks
+      # that every node agrees with its name, catching a corrupted node before
+      # its value is read.
+      verifyOnOpen: true
+      # keepRoots is how many roots of past versions are kept beside the root
+      # the channel is committed at; it is at least one.
+      keepRoots: 2
+      # gcIntervalBlocks runs the collector of the unreachable nodes every given
+      # number of blocks; zero collects only when a channel is opened.
+      gcIntervalBlocks: 1000
+      # exactMetrics records the whole root in a metric label, one series per
+      # commit; it is off because that series grows without bound.
+      exactMetrics: false
     # Limit on the number of records to return per query
     totalQueryLimit: 100000
     couchDBConfig:

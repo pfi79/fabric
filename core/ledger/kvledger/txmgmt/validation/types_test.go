@@ -29,12 +29,12 @@ func TestNewPubAndHashUpdates(t *testing.T) {
 func TestContainsPostOrderWrites(t *testing.T) {
 	u := newPubAndHashUpdates()
 	rws := &rwsetutil.TxRwSet{}
-	require.NoError(t, u.applyWriteSet(rws, nil, nil, false))
+	require.NoError(t, u.applyWriteSet(rws, nil, nil, false, privacyenabledstate.NewUpdateBatch()))
 	require.False(t, u.publicUpdates.ContainsPostOrderWrites)
-	require.NoError(t, u.applyWriteSet(rws, nil, nil, true))
+	require.NoError(t, u.applyWriteSet(rws, nil, nil, true, privacyenabledstate.NewUpdateBatch()))
 	require.True(t, u.publicUpdates.ContainsPostOrderWrites)
 	// once set to true, should always return true
-	require.NoError(t, u.applyWriteSet(rws, nil, nil, false))
+	require.NoError(t, u.applyWriteSet(rws, nil, nil, false, privacyenabledstate.NewUpdateBatch()))
 	require.True(t, u.publicUpdates.ContainsPostOrderWrites)
 }
 
@@ -144,7 +144,7 @@ func TestApplyWriteSet(t *testing.T) {
 	testdb := testdbEnv.GetDBHandle("testdb")
 
 	// Call
-	require.NoError(t, pahu.applyWriteSet(txRWSet1, ver1, testdb, false))
+	require.NoError(t, pahu.applyWriteSet(txRWSet1, ver1, testdb, false, privacyenabledstate.NewUpdateBatch()))
 
 	// Check result
 	require.Equal(t, expected, pahu)

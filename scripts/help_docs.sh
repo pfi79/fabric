@@ -148,4 +148,11 @@ generateOrCheck \
         docs/wrappers/ledgerutil_postscript.md \
         "${commands[@]}"
 
+commands=("dbmigrator migrate" "dbmigrator purge")
+generateOrCheck \
+        docs/source/commands/dbmigrator.md \
+        docs/wrappers/dbmigrator_preamble.md \
+        docs/wrappers/dbmigrator_postscript.md \
+        "${commands[@]}"
+
 exit

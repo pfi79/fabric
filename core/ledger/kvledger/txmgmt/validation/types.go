@@ -28,6 +28,20 @@ type transaction struct {
 	rwset                   *rwsetutil.TxRwSet
 	validationCode          peer.TxValidationCode
 	containsPostOrderWrites bool
+	// updates holds what this transaction writes, apart from the updates of the
+	// block as a whole, which is what the boundaries between the transactions of
+	// a block are made of. It is filled in as the transaction is prepared, and it
+	// stays nil for a transaction that is invalid or that writes nothing.
+	updates *privacyenabledstate.UpdateBatch
+}
+
+// updatesForTx returns the batch of the updates of this transaction, and makes
+// one if this is the first update written into it.
+func (t *transaction) updatesForTx() *privacyenabledstate.UpdateBatch {
+	if t.updates == nil {
+		t.updates = privacyenabledstate.NewUpdateBatch()
+	}
+	return t.updates
 }
 
 // publicAndHashUpdates encapsulates public and hash updates. The intended use of this to hold the updates
@@ -77,12 +91,17 @@ func (t *transaction) retrieveHash(ns string, coll string) []byte {
 	return nil
 }
 
-// applyWriteSet adds (or deletes) the key/values present in the write set to the publicAndHashUpdates
+// applyWriteSet adds (or deletes) the key/values present in the write set to the
+// publicAndHashUpdates, and to the given batch as well, which holds what this
+// transaction writes and nothing else.
+//
+// Both are given the very same values: a value is held twice, never copied.
 func (u *publicAndHashUpdates) applyWriteSet(
 	txRWSet *rwsetutil.TxRwSet,
 	txHeight *version.Height,
 	db *privacyenabledstate.DB,
 	containsPostOrderWrites bool,
+	txUpdates *privacyenabledstate.UpdateBatch,
 ) error {
 	u.publicUpdates.ContainsPostOrderWrites =
 		u.publicUpdates.ContainsPostOrderWrites || containsPostOrderWrites
@@ -91,22 +110,35 @@ func (u *publicAndHashUpdates) applyWriteSet(
 	if err != nil {
 		return err
 	}
+	applyTxOps(txops, u.publicUpdates, u.hashUpdates, txHeight)
+	txUpdates.PubUpdates.ContainsPostOrderWrites = containsPostOrderWrites
+	applyTxOps(txops, txUpdates.PubUpdates, txUpdates.HashUpdates, txHeight)
+	return nil
+}
+
+// applyTxOps adds (or deletes) the key/values the given key ops stand for to the
+// public and the hash updates
+func applyTxOps(
+	txops txOps,
+	pubUpdates *privacyenabledstate.PubUpdateBatch,
+	hashUpdates *privacyenabledstate.HashedUpdateBatch,
+	txHeight *version.Height,
+) {
 	for compositeKey, keyops := range txops {
 		if compositeKey.coll == "" {
 			ns, key := compositeKey.ns, compositeKey.key
 			if keyops.isDelete() {
-				u.publicUpdates.Delete(ns, key, txHeight)
+				pubUpdates.Delete(ns, key, txHeight)
 			} else {
-				u.publicUpdates.PutValAndMetadata(ns, key, keyops.value, keyops.metadata, txHeight)
+				pubUpdates.PutValAndMetadata(ns, key, keyops.value, keyops.metadata, txHeight)
 			}
 		} else {
 			ns, coll, keyHash := compositeKey.ns, compositeKey.coll, []byte(compositeKey.key)
 			if keyops.isDelete() {
-				u.hashUpdates.Delete(ns, coll, keyHash, txHeight)
+				hashUpdates.Delete(ns, coll, keyHash, txHeight)
 			} else {
-				u.hashUpdates.PutValHashAndMetadata(ns, coll, keyHash, keyops.value, keyops.metadata, txHeight)
+				hashUpdates.PutValHashAndMetadata(ns, coll, keyHash, keyops.value, keyops.metadata, txHeight)
 			}
 		}
 	}
-	return nil
 }

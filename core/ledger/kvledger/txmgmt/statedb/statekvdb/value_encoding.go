@@ -12,8 +12,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// encodeValue encodes the value, version, and metadata
-func encodeValue(v *statedb.VersionedValue) ([]byte, error) {
+// EncodeValue encodes the value, version, and metadata. It is exported because
+// the world state is not kept in only one shape: a store that holds the state
+// somewhere other than under a LevelDB key, such as the trie of statedb
+// leveldbtrie, writes the very same bytes so that the two formats stay one.
+func EncodeValue(v *statedb.VersionedValue) ([]byte, error) {
 	return proto.Marshal(
 		&DBValue{
 			Version:  v.Version.ToBytes(),
@@ -23,8 +26,8 @@ func encodeValue(v *statedb.VersionedValue) ([]byte, error) {
 	)
 }
 
-// decodeValue decodes the statedb value bytes
-func decodeValue(encodedValue []byte) (*statedb.VersionedValue, error) {
+// DecodeValue decodes the statedb value bytes
+func DecodeValue(encodedValue []byte) (*statedb.VersionedValue, error) {
 	dbValue := &DBValue{}
 	err := proto.Unmarshal(encodedValue, dbValue)
 	if err != nil {

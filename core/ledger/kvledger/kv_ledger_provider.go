@@ -118,10 +118,10 @@ func NewProvider(initializer *ledger.Initializer) (pr *Provider, e error) {
 	}
 	p.initCollElgNotifier()
 	p.initStateListeners()
+	p.initLedgerStatistics()
 	if err := p.initStateDBProvider(); err != nil {
 		return nil, err
 	}
-	p.initLedgerStatistics()
 	if err := p.deletePartialLedgers(); err != nil {
 		return nil, err
 	}
@@ -235,6 +235,7 @@ func (p *Provider) initStateDBProvider() error {
 	stateDBConfig := &privacyenabledstate.StateDBConfig{
 		StateDBConfig: p.initializer.Config.StateDBConfig,
 		LevelDBPath:   StateDBPath(p.initializer.Config.RootFSPath),
+		RootReporter:  p.stats,
 	}
 	sysNamespaces := p.initializer.DeployedChaincodeInfoProvider.Namespaces()
 	p.dbProvider, err = privacyenabledstate.NewDBProvider(
@@ -248,7 +249,18 @@ func (p *Provider) initStateDBProvider() error {
 }
 
 func (p *Provider) initLedgerStatistics() {
-	p.stats = newStats(p.initializer.MetricsProvider)
+	p.stats = newStats(p.initializer.MetricsProvider, p.exactTrieMetrics())
+}
+
+// exactTrieMetrics reports whether the exact root series of the state trie is
+// configured to be emitted. That series names every commit, so it stays off
+// unless the configuration asks for it.
+func (p *Provider) exactTrieMetrics() bool {
+	stateDBConfig := p.initializer.Config.StateDBConfig
+	if stateDBConfig == nil || stateDBConfig.LevelDBTrie == nil {
+		return false
+	}
+	return stateDBConfig.LevelDBTrie.ExactMetrics
 }
 
 func (p *Provider) initSnapshotDir() error {

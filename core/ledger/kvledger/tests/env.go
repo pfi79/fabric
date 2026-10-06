@@ -59,6 +59,20 @@ func newEnvWithInitializer(t *testing.T, initializer *ledgermgmt.Initializer) *e
 	}
 }
 
+// newEnvWithStateDB returns an environment whose state database is of the given
+// type, so that the same ledger operations can be run against every store of the
+// state and told apart only by this name. A store that is not named keeps the
+// configuration of the specification.
+func newEnvWithStateDB(t *testing.T, stateDBType string) *env {
+	return newEnvWithInitializer(t, &ledgermgmt.Initializer{
+		Config: &ledger.Config{
+			StateDBConfig: &ledger.StateDBConfig{
+				StateDatabase: stateDBType,
+			},
+		},
+	})
+}
+
 func (e *env) cleanup() {
 	if e.ledgerMgr != nil {
 		e.ledgerMgr.Close()
@@ -212,9 +226,12 @@ func populateMissingsWithTestDefaults(t *testing.T, initializer *ledgermgmt.Init
 			t.Fatalf("Failed to create root directory: %s", err)
 		}
 
-		initializer.Config = &ledger.Config{
-			RootFSPath: rootPath,
+		config := initializer.Config
+		if config == nil {
+			config = &ledger.Config{}
 		}
+		config.RootFSPath = rootPath
+		initializer.Config = config
 	}
 
 	if initializer.Config.StateDBConfig == nil {

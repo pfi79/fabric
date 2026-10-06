@@ -16,5 +16,6 @@ Commands Reference
    commands/configtxlator.md
    commands/cryptogen.md
    commands/ledgerutil.md
+   commands/dbmigrator.md
    discovery-cli.md
    commands/fabric-ca-commands

@@ -117,7 +117,26 @@ func (p *CommitBatchPreparer) ValidateAndPrepareBatch(blockAndPvtdata *ledger.Bl
 		PubUpdates:  pubAndHashUpdates.publicUpdates,
 		HashUpdates: pubAndHashUpdates.hashUpdates,
 		PvtUpdates:  pvtUpdates,
+		PerTx:       updatesPerTx(internalBlock),
 	}, purgeUpdates, txsStatInfo, nil
+}
+
+// updatesPerTx returns the updates of the block kept apart by the transactions
+// of the block: the entry at index i is what the transaction that carries the
+// number i in the block writes. A transaction that is invalid has no entry at
+// all, and a transaction that writes nothing has an empty one.
+//
+// The list reaches as far as the transaction of the block that is numbered
+// highest, the transactions past the last one having nothing to say.
+func updatesPerTx(blk *block) []*privacyenabledstate.UpdateBatch {
+	var perTx []*privacyenabledstate.UpdateBatch
+	for _, tx := range blk.txs {
+		for len(perTx) <= tx.indexInBlock {
+			perTx = append(perTx, nil)
+		}
+		perTx[tx.indexInBlock] = tx.updates
+	}
+	return perTx
 }
 
 // validateAndPreparePvtBatch pulls out the private write-set for the transactions that are marked as valid
@@ -152,7 +171,11 @@ func validateAndPreparePvtBatch(
 		if pvtRWSet, err = rwsetutil.TxPvtRwSetFromProtoMsg(txPvtdata.WriteSet); err != nil {
 			return nil, err
 		}
-		addPvtRWSetToPvtUpdateBatch(pvtRWSet, pvtUpdates, version.NewHeight(blk.num, uint64(tx.indexInBlock)))
+		txHeight := version.NewHeight(blk.num, uint64(tx.indexInBlock))
+		// The private data of a transaction enters the state with that
+		// transaction, and so does the hash of it.
+		addPvtRWSetToPvtUpdateBatch(pvtRWSet, pvtUpdates, txHeight)
+		addPvtRWSetToPvtUpdateBatch(pvtRWSet, tx.updatesForTx().PvtUpdates, txHeight)
 		addEntriesToMetadataUpdates(metadataUpdates, pvtRWSet)
 	}
 	if err := incrementPvtdataVersionIfNeeded(metadataUpdates, pvtUpdates, pubAndHashUpdates, db); err != nil {

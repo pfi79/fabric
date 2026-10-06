@@ -13,11 +13,14 @@ import (
 	"io"
 	"testing"
 
+	"github.com/hyperledger/fabric-lib-go/common/metrics/disabled"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric/common/ledger/testutil"
 	"github.com/hyperledger/fabric/core/common/ccprovider"
+	"github.com/hyperledger/fabric/core/ledger"
 	"github.com/hyperledger/fabric/core/ledger/cceventmgmt"
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	testmock "github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/privacyenabledstate/mock"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
@@ -684,4 +687,57 @@ func TestPossibleNamespaces(t *testing.T) {
 	namespaces, err := nsProvider.PossibleNamespaces(&statecouchdb.VersionedDB{})
 	require.NoError(t, err)
 	require.ElementsMatch(t, expectedNamespaces, namespaces)
+}
+
+// The store behind a db is chosen by the name of the state database: the trie
+// is the one store that can hand out the root of the state after every
+// transaction of a block, and a name that is neither the trie nor CouchDB keeps
+// opening the LevelDB store it opened before.
+func TestStateDatabaseSelection(t *testing.T) {
+	tests := []struct {
+		name          string
+		stateDatabase string
+		wantsTrie     bool
+	}{
+		{
+			name:          "leveldbtrie",
+			stateDatabase: ledger.LevelDBTrie,
+			wantsTrie:     true,
+		},
+		{
+			name:          "goleveldb",
+			stateDatabase: ledger.GoLevelDB,
+			wantsTrie:     false,
+		},
+		{
+			name:          "unknown",
+			stateDatabase: "someUnknownStore",
+			wantsTrie:     false,
+		},
+	}
+
+	for _, test := range tests {
+		_test := test
+		t.Run(_test.name, func(t *testing.T) {
+			bookkeeper := bookkeeping.NewTestEnv(t, ledger.GoLevelDB)
+			t.Cleanup(bookkeeper.Cleanup)
+			provider, err := NewDBProvider(
+				bookkeeper.TestProvider,
+				&disabled.Provider{},
+				&mock.HealthCheckRegistry{},
+				&StateDBConfig{
+					StateDBConfig: &ledger.StateDBConfig{StateDatabase: _test.stateDatabase},
+					LevelDBPath:   t.TempDir(),
+				},
+				[]string{"lscc"},
+			)
+			require.NoError(t, err)
+			t.Cleanup(provider.Close)
+
+			db, err := provider.GetDBHandle("channel1", nil)
+			require.NoError(t, err)
+			_, isTrie := db.VersionedDB.(statedb.IntermediateRoots)
+			require.Equal(t, _test.wantsTrie, isTrie)
+		})
+	}
 }

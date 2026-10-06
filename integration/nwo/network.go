@@ -145,8 +145,14 @@ type Profile struct {
 	SmartBFT            *SmartBFT `yaml:"smart_bft,omitempty"`
 }
 
-// GoLevelDB is the value the core template writes to ledger.state.stateDatabase.
-const GoLevelDB = "goleveldb"
+const (
+	// GoLevelDB is the value the core template writes to ledger.state.stateDatabase.
+	GoLevelDB = "goleveldb"
+	// LevelDBTrie is the value the core template writes to ledger.state.stateDatabase
+	// for the store that keeps the world state of a channel in a patricia merkle
+	// trie whose nodes are kept in LevelDB.
+	LevelDBTrie = "leveldbtrie"
+)
 
 // Network holds information about a fabric network.
 type Network struct {

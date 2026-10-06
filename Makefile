@@ -85,11 +85,12 @@ GO_TAGS ?=
 RELEASE_EXES = orderer $(TOOLS_EXES)
 RELEASE_IMAGES = baseos ccenv orderer peer
 RELEASE_PLATFORMS = darwin-amd64 darwin-arm64 linux-amd64 linux-arm64 windows-amd64
-TOOLS_EXES = configtxgen configtxlator cryptogen discover ledgerutil osnadmin peer
+TOOLS_EXES = configtxgen configtxlator cryptogen dbmigrator discover ledgerutil osnadmin peer
 
 pkgmap.configtxgen    := $(PKGNAME)/cmd/configtxgen
 pkgmap.configtxlator  := $(PKGNAME)/cmd/configtxlator
 pkgmap.cryptogen      := $(PKGNAME)/cmd/cryptogen
+pkgmap.dbmigrator     := $(PKGNAME)/cmd/dbmigrator
 pkgmap.discover       := $(PKGNAME)/cmd/discover
 pkgmap.ledgerutil     := $(PKGNAME)/cmd/ledgerutil
 pkgmap.orderer        := $(PKGNAME)/cmd/orderer

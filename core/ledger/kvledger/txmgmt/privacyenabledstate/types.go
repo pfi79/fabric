@@ -41,6 +41,19 @@ type UpdateBatch struct {
 	PubUpdates  *PubUpdateBatch
 	HashUpdates *HashedUpdateBatch
 	PvtUpdates  *PvtUpdateBatch
+
+	// PerTx holds the same updates, kept apart by the transactions of the block:
+	// the entry at index i is what the transaction that carries the number i in
+	// the block writes. A transaction that is invalid has no entry at all, and a
+	// transaction that writes nothing has an empty one.
+	//
+	// The entries hold the very same values as the batches above. Only pointers
+	// and maps are held twice, never the bytes of a value.
+	//
+	// The boundaries between the transactions are of interest to a store that
+	// implements statedb.IntermediateRoots and to nobody else. A store that does
+	// not is never shown them.
+	PerTx []*UpdateBatch
 }
 
 // PubUpdateBatch contains update for the public data
@@ -68,7 +81,11 @@ type NsBatch struct {
 
 // NewUpdateBatch creates and empty UpdateBatch
 func NewUpdateBatch() *UpdateBatch {
-	return &UpdateBatch{NewPubUpdateBatch(), NewHashedUpdateBatch(), NewPvtUpdateBatch()}
+	return &UpdateBatch{
+		PubUpdates:  NewPubUpdateBatch(),
+		HashUpdates: NewHashedUpdateBatch(),
+		PvtUpdates:  NewPvtUpdateBatch(),
+	}
 }
 
 // NewPubUpdateBatch creates an empty PubUpdateBatch

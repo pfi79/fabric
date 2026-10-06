@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package privacyenabledstate
 
 import (
+	"bytes"
 	"encoding/base64"
+	"maps"
 	"strings"
 
 	"github.com/hyperledger/fabric-lib-go/common/flogging"
@@ -19,6 +21,7 @@ import (
 	"github.com/hyperledger/fabric/core/ledger/internal/version"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/bookkeeping"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/leveldbtrie"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statecouchdb"
 	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/statekvdb"
 	"github.com/hyperledger/fabric/core/ledger/util"
@@ -41,6 +44,12 @@ type StateDBConfig struct {
 	// It is internally computed by the ledger component,
 	// so it is not in ledger.StateDBConfig and not exposed to other components.
 	LevelDBPath string
+	// RootReporter receives the root of the state of every channel as the blocks
+	// are committed. It is the reporter the store behind this db was given as
+	// well: the roots of the transactions of a block are reported from here, and
+	// the root of the block and the work of the garbage collector are reported
+	// from there.
+	RootReporter statedb.RootReporter
 }
 
 // DBProvider encapsulates other providers such as VersionedDBProvider and
@@ -48,6 +57,9 @@ type StateDBConfig struct {
 type DBProvider struct {
 	VersionedDBProvider statedb.VersionedDBProvider
 	HealthCheckRegistry ledger.HealthCheckRegistry
+	// RootReporter is handed the roots of the state of the channels of this
+	// provider as their blocks are committed.
+	RootReporter        statedb.RootReporter
 	bookkeepingProvider *bookkeeping.Provider
 }
 
@@ -66,6 +78,12 @@ func NewDBProvider(
 		if vdbProvider, err = statecouchdb.NewVersionedDBProvider(stateDBConf.CouchDB, metricsProvider, sysNamespaces); err != nil {
 			return nil, err
 		}
+	} else if stateDBConf != nil && stateDBConf.StateDatabase == ledger.LevelDBTrie {
+		// The nodes of the trie live in the LevelDB the state has always been
+		// stored in, so the type of the store behind the trie is the LevelDB type.
+		if vdbProvider, err = leveldbtrie.NewProvider(stateDBConf.LevelDBPath, ledger.GoLevelDB, stateDBConf.LevelDBTrie, stateDBConf.RootReporter); err != nil {
+			return nil, err
+		}
 	} else {
 		if vdbProvider, err = statekvdb.NewVersionedDBProvider(stateDBConf.LevelDBPath, stateDBConf.StateDatabase); err != nil {
 			return nil, err
@@ -75,6 +93,7 @@ func NewDBProvider(
 	dbProvider := &DBProvider{
 		VersionedDBProvider: vdbProvider,
 		HealthCheckRegistry: healthCheckRegistry,
+		RootReporter:        stateDBConf.RootReporter,
 		bookkeepingProvider: bookkeeperProvider,
 	}
 
@@ -107,7 +126,12 @@ func (p *DBProvider) GetDBHandle(id string, chInfoProvider channelInfoProvider) 
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(vdb, id, metadataHint)
+	db, err := NewDB(vdb, id, metadataHint)
+	if err != nil {
+		return nil, err
+	}
+	db.RootReporter = p.RootReporter
+	return db, nil
 }
 
 // Close closes all the VersionedDB instances and releases any resources held by VersionedDBProvider
@@ -124,12 +148,17 @@ func (p *DBProvider) Drop(ledgerid string) error {
 type DB struct {
 	statedb.VersionedDB
 	metadataHint *metadataHint
+	// RootReporter receives the root of the state after every transaction of a
+	// block, when the store behind this db is able to hand those roots out. A db
+	// with no reporter is given the block as the one batch it has always been
+	// given, the roots of the transactions being of no use to nobody then.
+	RootReporter statedb.RootReporter
 }
 
 // NewDB wraps a VersionedDB instance. The public data is managed directly by the wrapped versionedDB.
 // For managing the hashed data and private data, this implementation creates separate namespaces in the wrapped db
 func NewDB(vdb statedb.VersionedDB, ledgerid string, metadataHint *metadataHint) (*DB, error) {
-	return &DB{vdb, metadataHint}, nil
+	return &DB{VersionedDB: vdb, metadataHint: metadataHint}, nil
 }
 
 // IsBulkOptimizable checks whether the underlying statedb implements statedb.BulkOptimizable
@@ -261,7 +290,128 @@ func (s *DB) ApplyPrivacyAwareUpdates(updates *UpdateBatch, height *version.Heig
 	if err := s.metadataHint.setMetadataUsedFlag(updates); err != nil {
 		return err
 	}
-	return s.VersionedDB.ApplyUpdates(combinedUpdates.UpdateBatch, height)
+	// A db that can hand out the root of the state after every transaction of the
+	// block is committed transaction by transaction, and the boundaries of the
+	// block are what it needs to do so. A db that cannot is committed the one
+	// batch it has always been given, and so is a peer with no reporter, which
+	// has nowhere to put the roots of the transactions: a root that is not
+	// reported is not a reason to leave the block half committed, nor to keep
+	// the boundaries of its transactions to no end.
+	store, ok := s.VersionedDB.(statedb.IntermediateRoots)
+	if !ok || s.RootReporter == nil {
+		return s.VersionedDB.ApplyUpdates(combinedUpdates.UpdateBatch, height)
+	}
+	return store.ApplyUpdatesWithRoots(
+		combinedUpdates.UpdateBatch,
+		height,
+		s.mergedPerTx(updates, combinedUpdates.UpdateBatch),
+		s.RootReporter,
+	)
+}
+
+// mergedPerTx merges the public, the private and the hashed updates of every
+// transaction of the block into one batch per transaction, in the order of the
+// transactions of the block, and returns those batches: the boundaries of the
+// block are what a store behind a tree needs to hand out the root of the state
+// after each of them.
+//
+// Every transaction of the list is given a batch, an empty one for a transaction
+// that writes nothing, so that a store can walk the block transaction by
+// transaction without having to make anything of an entry that is not there.
+//
+// A write of the block that no transaction of the block accounts for - an expiry
+// marker of the purge manager, the delete of an application initiated purge, or
+// the version a private value has to be re-stamped with because a metadata only
+// transaction moved the version of its hash - belongs to no transaction. It is
+// put into the batch of the last transaction that writes something, which is
+// also the transaction the root of the block as a whole is the root of. A block
+// none of whose transactions writes anything, of which only the bookkeeping
+// above is left, credits them to its last transaction.
+func (s *DB) mergedPerTx(updates *UpdateBatch, combined *statedb.UpdateBatch) []*statedb.UpdateBatch {
+	if len(updates.PerTx) == 0 {
+		return nil
+	}
+	base64Key := !s.BytesKeySupported()
+	perTx := make([]*statedb.UpdateBatch, len(updates.PerTx))
+	lastWriting := -1
+	for i, txUpdates := range updates.PerTx {
+		mergedTx := statedb.NewUpdateBatch()
+		if txUpdates != nil {
+			pubUpdates := txUpdates.PubUpdates
+			addPvtUpdates(pubUpdates, txUpdates.PvtUpdates)
+			addHashedUpdates(pubUpdates, txUpdates.HashUpdates, base64Key)
+			mergedTx = pubUpdates.UpdateBatch
+		}
+		perTx[i] = mergedTx
+		if batchHasWrites(mergedTx) {
+			lastWriting = i
+		}
+	}
+	if unclaimed := unclaimedUpdates(combined, perTx); batchHasWrites(unclaimed) {
+		if lastWriting < 0 {
+			lastWriting = len(perTx) - 1
+		}
+		perTx[lastWriting].Merge(unclaimed)
+	}
+	return perTx
+}
+
+// unclaimedUpdates returns the writes of the block that the batches of the
+// transactions do not already carry as they are.
+func unclaimedUpdates(combined *statedb.UpdateBatch, perTx []*statedb.UpdateBatch) *statedb.UpdateBatch {
+	claimed := map[string]map[string]*statedb.VersionedValue{}
+	for _, txBatch := range perTx {
+		if txBatch == nil {
+			continue
+		}
+		for _, ns := range txBatch.GetUpdatedNamespaces() {
+			keys, ok := claimed[ns]
+			if !ok {
+				keys = map[string]*statedb.VersionedValue{}
+				claimed[ns] = keys
+			}
+			maps.Copy(keys, txBatch.GetUpdates(ns))
+		}
+	}
+
+	unclaimed := statedb.NewUpdateBatch()
+	for _, ns := range combined.GetUpdatedNamespaces() {
+		for key, vv := range combined.GetUpdates(ns) {
+			if isCarriedAsIs(claimed[ns], key, vv) {
+				continue
+			}
+			unclaimed.Update(ns, key, vv)
+		}
+	}
+	return unclaimed
+}
+
+// isCarriedAsIs tells whether the last of the transactions of the block that
+// writes this key writes it exactly as the block does. The version alone is not
+// enough to tell: a bookkeeping write of the block is allowed to re-stamp the
+// version of a value, and a write whose value or metadata differs at the same
+// version would be dropped were only the version compared. A write the block
+// carries as-is is one whose version, value and metadata are all the same.
+func isCarriedAsIs(keys map[string]*statedb.VersionedValue, key string, vv *statedb.VersionedValue) bool {
+	carried, ok := keys[key]
+	if !ok {
+		return false
+	}
+	return version.AreSame(carried.Version, vv.Version) &&
+		bytes.Equal(carried.Value, vv.Value) &&
+		bytes.Equal(carried.Metadata, vv.Metadata)
+}
+
+func batchHasWrites(batch *statedb.UpdateBatch) bool {
+	if batch == nil {
+		return false
+	}
+	for _, ns := range batch.GetUpdatedNamespaces() {
+		if len(batch.GetUpdates(ns)) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // GetStateMetadata implements corresponding function in interface DB. This implementation provides

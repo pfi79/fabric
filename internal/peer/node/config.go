@@ -12,6 +12,7 @@ import (
 
 	coreconfig "github.com/hyperledger/fabric/core/config"
 	"github.com/hyperledger/fabric/core/ledger"
+	"github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/statedb/leveldbtrie"
 	"github.com/spf13/viper"
 )
 
@@ -100,6 +101,35 @@ func ledgerConfig() *ledger.Config {
 			RedoLogPath:           filepath.Join(ledgersDataRootDir, "couchdbRedoLogs"),
 			RedoLogDBType:         commonDBType,
 			UserCacheSizeMBs:      viper.GetInt("ledger.state.couchDBConfig.cacheSize"),
+		}
+	}
+
+	if conf.StateDBConfig.StateDatabase == ledger.LevelDBTrie {
+		// The whole configuration of the trie is read, not just the keys that
+		// are set, so that the store receives every value it runs on: a value
+		// left out is given the default here, where a key set to false or to
+		// zero can still be told from a key that was never there.
+		verifyOnOpen := true
+		if viper.IsSet("ledger.state.leveldbtrie.verifyOnOpen") {
+			verifyOnOpen = viper.GetBool("ledger.state.leveldbtrie.verifyOnOpen")
+		}
+		keepRoots := 2
+		if viper.IsSet("ledger.state.leveldbtrie.keepRoots") {
+			keepRoots = viper.GetInt("ledger.state.leveldbtrie.keepRoots")
+		}
+		gcIntervalBlocks := 1000
+		if viper.IsSet("ledger.state.leveldbtrie.gcIntervalBlocks") {
+			gcIntervalBlocks = viper.GetInt("ledger.state.leveldbtrie.gcIntervalBlocks")
+		}
+		exactMetrics := false
+		if viper.IsSet("ledger.state.leveldbtrie.exactMetrics") {
+			exactMetrics = viper.GetBool("ledger.state.leveldbtrie.exactMetrics")
+		}
+		conf.StateDBConfig.LevelDBTrie = &leveldbtrie.Conf{
+			VerifyOnOpen:     verifyOnOpen,
+			KeepRoots:        keepRoots,
+			GCIntervalBlocks: gcIntervalBlocks,
+			ExactMetrics:     exactMetrics,
 		}
 	}
 	return conf
